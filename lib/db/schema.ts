@@ -45,6 +45,25 @@ export const transactions = pgTable("transactions", {
   createdAt:   timestamp("created_at").defaultNow().notNull(),
 });
 
+export const assetsRelations = relations(assets, ({ many }) => ({
+  valuations: many(valuations),
+  transactions: many(transactions),
+}));
+
+export const valuationsRelations = relations(valuations, ({ one }) => ({
+  asset: one(assets, {
+    fields: [valuations.assetId],
+    references: [assets.id],
+  }),
+}));
+
+export const transactionsRelations = relations(transactions, ({ one }) => ({
+  asset: one(assets, {
+    fields: [transactions.assetId],
+    references: [assets.id],
+  }),
+}));
+
 
 export const user = pgTable("user", {
   id: text("id").primaryKey(),

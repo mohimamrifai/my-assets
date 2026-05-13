@@ -1,5 +1,9 @@
+import * as dotenv from "dotenv";
+dotenv.config({ path: ".env.local" });
+
 import { db } from "./index";
 import { assets, valuations } from "./schema";
+import { auth } from "../auth";
 
 const seedAssets = [
   {
@@ -47,6 +51,16 @@ const seedAssets = [
 async function seed() {
   console.log("🌱 Seeding database...");
   try {
+    console.log("Creating admin user...");
+    await auth.api.signUpEmail({
+      body: {
+        email: "admin@myassets.com",
+        password: "password123",
+        name: "Admin User",
+      }
+    });
+    console.log("Admin user created: admin@myassets.com / password123");
+
     for (const asset of seedAssets) {
       const [newAsset] = await db.insert(assets).values(asset).returning();
       
