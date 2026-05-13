@@ -61,7 +61,10 @@ export function SectorBreakdown({ saham, crypto, emas }: SectorBreakdownProps) {
                 ))}
               </Pie>
               <RechartsTooltip 
-                formatter={(value: any) => formatIDR(Number(value))}
+                formatter={(value: string | number | readonly (string | number)[] | undefined) => {
+                  if (Array.isArray(value)) return formatIDR(Number(value[0] || 0));
+                  return formatIDR(Number(value || 0));
+                }}
                 contentStyle={{ backgroundColor: '#1A1D2E', borderColor: '#2A2D3E', color: '#F1F5F9', borderRadius: '8px' }}
                 itemStyle={{ color: '#F1F5F9' }}
               />

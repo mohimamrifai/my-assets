@@ -12,6 +12,7 @@ import { toast } from "sonner";
 
 import { cn } from "@/lib/utils";
 import { createAssetSchema } from "@/lib/validations";
+import { formatIDR } from "@/lib/formatters";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -22,13 +23,15 @@ import { Calendar } from "@/components/ui/calendar";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { AssetType, AssetMode } from "@/types";
 
+type AssetFormValues = z.infer<typeof createAssetSchema>;
+
 export default function NewAssetPage() {
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const form = useForm<any>({
-    resolver: zodResolver(createAssetSchema),
+  const form = useForm<AssetFormValues>({
+    resolver: zodResolver(createAssetSchema) as any,
     defaultValues: {
       type: "SAHAM",
       mode: "INVESTING",
@@ -263,7 +266,7 @@ export default function NewAssetPage() {
             <div className="md:col-span-2 p-4 rounded-lg bg-primary/5 border border-primary/20 flex items-center justify-between">
               <span className="text-sm font-medium">Estimasi Total Modal:</span>
               <span className="text-lg font-bold text-primary">
-                {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(calculatedTotal)}
+                {formatIDR(calculatedTotal)}
               </span>
             </div>
             
@@ -284,7 +287,7 @@ export default function NewAssetPage() {
                           )}
                         >
                           {field.value ? (
-                            format(field.value, "PPP", { locale: id })
+                            format(field.value as Date, "PPP", { locale: id })
                           ) : (
                             <span>Pilih tanggal</span>
                           )}
@@ -295,7 +298,7 @@ export default function NewAssetPage() {
                     <PopoverContent className="w-auto p-0" align="start">
                       <Calendar
                         mode="single"
-                        selected={field.value || undefined}
+                        selected={(field.value as Date) || undefined}
                         onSelect={field.onChange}
                         disabled={(date: Date) =>
                           date > new Date() || date < new Date("1900-01-01")
@@ -371,7 +374,7 @@ export default function NewAssetPage() {
                           )}
                         >
                           {field.value ? (
-                            format(field.value, "PPP", { locale: id })
+                            format(field.value as Date, "PPP", { locale: id })
                           ) : (
                             <span>Pilih tanggal</span>
                           )}
@@ -382,7 +385,7 @@ export default function NewAssetPage() {
                     <PopoverContent className="w-auto p-0" align="start">
                       <Calendar
                         mode="single"
-                        selected={field.value || undefined}
+                        selected={(field.value as Date) || undefined}
                         onSelect={field.onChange}
                         disabled={(date: Date) =>
                           date > new Date() || date < new Date("1900-01-01")

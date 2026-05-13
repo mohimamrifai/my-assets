@@ -51,7 +51,7 @@ export function AssetTable({ assets }: AssetTableProps) {
               <TableHead className="font-medium">Tipe & Mode</TableHead>
               <TableHead className="font-medium text-right">Modal</TableHead>
               <TableHead className="font-medium text-right">Nilai Terkini</TableHead>
-              <TableHead className="font-medium text-right">G/L (Rp & %)</TableHead>
+              <TableHead className="font-medium text-right">G/L vs Modal</TableHead>
               <TableHead className="font-medium text-right">Aksi</TableHead>
             </TableRow>
           </TableHeader>

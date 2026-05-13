@@ -46,7 +46,7 @@ export function PerformanceChart({ valuations, totalModal }: PerformanceChartPro
   const maxVal = Math.max(...values, totalModal);
   const padding = (maxVal - minVal) * 0.1;
 
-  const CustomTooltip = ({ active, payload, label }: any) => {
+  const CustomTooltip = ({ active, payload, label }: { active?: boolean, payload?: { payload: { fullDate: string }, value: number }[], label?: string }) => {
     if (active && payload && payload.length) {
       return (
         <div className="bg-[#1A1D2E] border border-[#2A2D3E] p-3 rounded-lg shadow-xl">
