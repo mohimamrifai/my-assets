@@ -46,5 +46,14 @@ export interface DashboardData {
   totalCapital: number;
   totalGainLossNominal: number;
   totalGainLossPercent: number;
-  assets: AssetWithLatestValuation[];
+  byMode: {
+    investing: { netWorth: number; totalModal: number; gainLoss: { nominal: number; percent: number } };
+    trading: { netWorth: number; totalModal: number; gainLoss: { nominal: number; percent: number } };
+  };
+  bySector: {
+    SAHAM: { value: number; percent: number };
+    CRYPTO: { value: number; percent: number };
+    EMAS: { value: number; percent: number };
+  };
+  assets: (AssetWithLatestValuation & { currentValue: number; totalModal: number; gainLoss: { nominal: number; percent: number } })[];
 }
