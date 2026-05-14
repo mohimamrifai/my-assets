@@ -65,7 +65,7 @@ export async function POST(request: Request) {
       const [insertedAsset] = await tx
         .insert(assets)
         .values({
-          name: validatedData.name,
+          name: validatedData.name || "",
           type: validatedData.type,
           mode: validatedData.mode,
           notes: validatedData.notes,

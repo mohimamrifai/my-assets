@@ -7,6 +7,7 @@ import { GainLossCard } from "@/components/dashboard/GainLossCard";
 import { FilterTabs, FilterMode } from "@/components/dashboard/FilterTabs";
 import { SectorBreakdown } from "@/components/dashboard/SectorBreakdown";
 import { AssetTable } from "@/components/dashboard/AssetTable";
+import { OverviewChart } from "@/components/dashboard/OverviewChart";
 import { DashboardData } from "@/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -96,9 +97,12 @@ export default function DashboardPage() {
       </PageHeader>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-6">
-          <NetWorthCard netWorth={displayNetWorth} totalModal={displayTotalModal} />
-          <GainLossCard nominal={displayGainLossNominal} percent={displayGainLossPercent} />
+        <div className="lg:col-span-2 flex flex-col gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 items-start content-start">
+            <NetWorthCard netWorth={displayNetWorth} totalModal={displayTotalModal} />
+            <GainLossCard nominal={displayGainLossNominal} percent={displayGainLossPercent} />
+          </div>
+          <OverviewChart assets={displayAssets} />
         </div>
         <div className="lg:col-span-1">
           <SectorBreakdown 
