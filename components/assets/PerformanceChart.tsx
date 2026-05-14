@@ -66,8 +66,8 @@ export function PerformanceChart({ valuations, totalModal }: PerformanceChartPro
         <CardTitle className="text-base font-medium">Tren Valuasi</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="h-[350px] w-full mt-4">
-          <ResponsiveContainer width="100%" height="100%">
+        <div className="h-[350px] w-full mt-4 min-h-[350px]">
+          <ResponsiveContainer width="100%" height="100%" minHeight={350}>
             <AreaChart
               data={data}
               margin={{ top: 10, right: 10, left: 10, bottom: 0 }}

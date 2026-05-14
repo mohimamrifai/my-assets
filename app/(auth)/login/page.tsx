@@ -9,6 +9,8 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Loader2, TrendingUp, Wallet, ShieldCheck, BarChart3 } from "lucide-react";
 
+import { Logo } from "@/components/shared/Logo";
+
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -41,20 +43,21 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen w-full flex bg-background">
-      {/* Left side: Branding & Visuals */}
-      <div className="hidden lg:flex w-1/2 bg-card relative overflow-hidden flex-col justify-between p-12 border-r border-border">
-        {/* Subtle grid pattern background */}
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]"></div>
+      {/* Sisi Kiri (Branding) - Menyesuaikan warna dengan Light Theme Green/Emerald */}
+      <div className="hidden lg:flex flex-col justify-center items-center w-1/2 bg-primary/10 relative overflow-hidden">
+        {/* Decorative background elements */}
+        <div className="absolute inset-0 z-0">
+          <div className="absolute inset-0 bg-[linear-gradient(to_right,#16A34A_1px,transparent_1px),linear-gradient(to_bottom,#16A34A_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_60%_at_50%_50%,#000_10%,transparent_100%)] opacity-[0.08]" />
+        </div>
         
-        {/* Abstract glowing orb */}
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-3xl mix-blend-screen opacity-50 animate-pulse"></div>
-        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-blue-600/10 rounded-full blur-3xl mix-blend-screen opacity-50"></div>
+        {/* Glow effects */}
+        <div className="absolute -top-1/4 -left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-3xl" />
+        <div className="absolute -bottom-1/4 -right-1/4 w-96 h-96 bg-primary/20 rounded-full blur-3xl" />
 
-        <div className="relative z-10 flex items-center gap-2 text-primary font-bold text-2xl tracking-tight">
-          <div className="bg-primary/10 p-2 rounded-lg ring-1 ring-primary/20">
-            <TrendingUp size={24} className="text-primary" />
-          </div>
-          MyAssets
+        {/* Header/Logo */}
+        <div className="absolute top-8 left-8 sm:top-12 sm:left-12 flex items-center gap-2">
+          <Logo size={40} showText={false} />
+          <span className="font-bold text-xl tracking-tight text-primary">MyAssets</span>
         </div>
 
         <div className="relative z-10 space-y-6 max-w-md">
@@ -93,12 +96,10 @@ export default function LoginPage() {
       </div>
 
       {/* Right side: Login Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 sm:p-12 relative">
+      <div className="w-full lg:w-1/2 flex flex-col justify-center items-center p-8 sm:p-12 relative z-10 bg-background">
         {/* Mobile branding header */}
         <div className="absolute top-8 left-8 flex lg:hidden items-center gap-2 text-primary font-bold text-xl tracking-tight">
-          <div className="bg-primary/10 p-1.5 rounded-md ring-1 ring-primary/20">
-            <TrendingUp size={20} className="text-primary" />
-          </div>
+          <Logo size={32} showText={false} />
           MyAssets
         </div>
 

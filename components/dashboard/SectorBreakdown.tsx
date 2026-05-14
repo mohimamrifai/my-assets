@@ -43,8 +43,8 @@ export function SectorBreakdown({ saham, crypto, emas }: SectorBreakdownProps) {
         <CardTitle className="text-base font-medium">Alokasi Sektor</CardTitle>
       </CardHeader>
       <CardContent className="flex-1 flex flex-col justify-center">
-        <div className="h-[200px] w-full relative">
-          <ResponsiveContainer width="100%" height="100%">
+        <div className="h-[200px] w-full relative min-h-[200px]">
+          <ResponsiveContainer width="100%" height="100%" minHeight={200}>
             <PieChart>
               <Pie
                 data={data}

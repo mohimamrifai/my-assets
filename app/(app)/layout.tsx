@@ -10,6 +10,8 @@ import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 
+import { Logo } from "@/components/shared/Logo";
+
 const navItems = [
   {
     title: "Dashboard",
@@ -36,7 +38,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const NavContent = () => (
     <div className="flex flex-col h-full">
       <div className="px-6 py-8">
-        <h1 className="text-2xl font-bold tracking-tight text-primary">MyAssets</h1>
+        <Logo size={40} />
       </div>
       <nav className="flex-1 px-4 space-y-2">
         {navItems.map((item) => {
@@ -75,7 +77,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen bg-background flex flex-col md:flex-row">
       {/* Mobile Top Nav */}
       <header className="md:hidden flex items-center justify-between px-4 h-16 border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
-        <h1 className="text-xl font-bold text-primary">MyAssets</h1>
+        <Logo size={28} />
         <Sheet open={open} onOpenChange={setOpen}>
           <SheetTrigger asChild>
             <Button variant="ghost" size="icon" className="text-foreground">
