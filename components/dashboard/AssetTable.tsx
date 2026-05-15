@@ -1,12 +1,14 @@
+import { useState, useMemo } from "react";
 import Link from "next/link";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { CurrencyDisplay } from "@/components/shared/CurrencyDisplay";
 import { GainLossBadge } from "@/components/shared/GainLossBadge";
-import { FolderPlus, MoreHorizontal, Eye, ArrowUpRight } from "lucide-react";
+import { FolderPlus, MoreHorizontal, Eye, ArrowUpRight, Search, ChevronLeft, ChevronRight } from "lucide-react";
 import { AssetWithLatestValuation } from "@/types";
 import { cn } from "@/lib/utils";
 
@@ -21,6 +23,30 @@ interface AssetTableProps {
 }
 
 export function AssetTable({ assets }: AssetTableProps) {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
+
+  const filteredAssets = useMemo(() => {
+    return assets.filter((asset) => {
+      const nameMatch = asset.name?.toLowerCase().includes(searchQuery.toLowerCase());
+      const platformMatch = asset.platformName?.toLowerCase().includes(searchQuery.toLowerCase());
+      return nameMatch || platformMatch;
+    });
+  }, [assets, searchQuery]);
+
+  const totalPages = Math.ceil(filteredAssets.length / itemsPerPage);
+  
+  const paginatedAssets = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredAssets.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredAssets, currentPage]);
+
+  // Reset to page 1 when search query changes
+  useMemo(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
+
   if (assets.length === 0) {
     return (
       <Card className="bg-card border-border shadow-sm">
@@ -41,11 +67,21 @@ export function AssetTable({ assets }: AssetTableProps) {
   }
 
   return (
-    <Card className="bg-card border-border shadow-sm overflow-hidden gap-0 rounded-md">
-      <CardHeader className="py-1 px-4 border-b border-border/50">
+    <Card className="bg-card border-border shadow-sm overflow-hidden gap-0 rounded-md flex flex-col">
+      <CardHeader className="py-3 px-4 border-b border-border/50 flex flex-row items-center justify-between space-y-0">
         <CardTitle className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Daftar Aset</CardTitle>
+        <div className="relative w-full max-w-xs">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
+          <Input 
+            placeholder="Cari aset..." 
+            className="pl-9 h-9 text-sm bg-muted/50 border-border/50 focus-visible:ring-emerald-500/30"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
       </CardHeader>
-      <div className="overflow-x-auto">
+      
+      <div className="overflow-x-auto flex-1">
         <Table>
           <TableHeader className="bg-muted/20">
             <TableRow className="border-border/50 hover:bg-transparent">
@@ -58,7 +94,7 @@ export function AssetTable({ assets }: AssetTableProps) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {assets.map((asset) => (
+            {paginatedAssets.length > 0 ? paginatedAssets.map((asset) => (
               <TableRow key={asset.id} className="border-border/50 hover:bg-muted/30 transition-colors group">
                 <TableCell className="px-4 py-3">
                   <div className="flex flex-col">
@@ -135,9 +171,41 @@ export function AssetTable({ assets }: AssetTableProps) {
                   </DropdownMenu>
                 </TableCell>
               </TableRow>
-            ))}
+            )) : (
+              <TableRow>
+                <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                  Aset tidak ditemukan.
+                </TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </Table>
+      </div>
+      
+      <div className="flex items-center justify-between px-4 py-3 border-t border-border/50 bg-muted/10">
+        <div className="text-xs text-muted-foreground">
+          Menampilkan <span className="font-medium text-foreground">{filteredAssets.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0}</span> - <span className="font-medium text-foreground">{Math.min(currentPage * itemsPerPage, filteredAssets.length)}</span> dari <span className="font-medium text-foreground">{filteredAssets.length}</span> aset
+        </div>
+        <div className="flex items-center gap-1">
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1 || filteredAssets.length === 0}
+          >
+            <ChevronLeft size={14} />
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+            disabled={currentPage >= totalPages || filteredAssets.length === 0}
+          >
+            <ChevronRight size={14} />
+          </Button>
+        </div>
       </div>
     </Card>
   );

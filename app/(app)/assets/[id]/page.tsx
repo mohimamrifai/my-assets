@@ -82,103 +82,111 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
   };
 
   return (
-    <div className="space-y-6 pb-12">
+    <div className="space-y-12 pb-16">
       <AssetDetailHeader asset={headerAsset} />
 
-      {/* Info Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      {/* Hero Stats Section */}
+      <div className="relative bg-emerald-50/50 rounded-lg border border-emerald-100/60 overflow-hidden shadow-sm">
+        {/* Subtle decorative background shapes */}
+        <div className="absolute top-0 right-0 -mr-24 -mt-24 size-72 rounded-full bg-emerald-500/10 blur-3xl" />
+        <div className="absolute bottom-0 left-0 -ml-24 -mb-24 size-72 rounded-full bg-emerald-400/5 blur-3xl" />
+        
+        <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-end gap-6 p-6 md:p-8">
+          <div>
+            <p className="text-emerald-800/80 font-semibold uppercase tracking-widest text-xs mb-2">Nilai Terkini</p>
+            <h1 className="text-3xl md:text-4xl font-bold text-emerald-950 tracking-tight tabular-nums mb-3">
+              <CurrencyDisplay value={currentValue} />
+            </h1>
+            <div className="inline-block bg-white/60 backdrop-blur-sm px-3 py-1.5 rounded-md border border-emerald-100 shadow-sm">
+              <GainLossBadge 
+                nominal={gainLoss.nominal} 
+                percent={gainLoss.percent} 
+                className="text-lg md:text-xl font-bold bg-transparent border-none p-0"
+              />
+            </div>
+          </div>
+          
+          <div className="flex flex-wrap gap-6 text-left md:text-right pt-4 border-t md:border-t-0 border-emerald-200/50 w-full md:w-auto">
+            <div>
+              <p className="text-emerald-700/60 font-semibold uppercase tracking-wider text-[10px] mb-1">Total Modal</p>
+              <p className="text-lg font-bold text-emerald-900"><CurrencyDisplay value={totalModal} /></p>
+            </div>
+            {asset.mode === "INVESTING" && (
+              <div>
+                <p className="text-emerald-700/60 font-semibold uppercase tracking-wider text-[10px] mb-1">Harga Beli</p>
+                <p className="text-lg font-bold text-emerald-900"><CurrencyDisplay value={asset.buyPrice || 0} /></p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Meta Info Bar (Borderless, Clean) */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 bg-card rounded-lg border border-border/50 p-3 md:p-4 shadow-sm">
         {asset.mode === "INVESTING" ? (
           <>
-            <Card className="bg-card border-border">
-              <CardContent className="p-4 sm:p-6">
-                <p className="text-sm font-medium text-muted-foreground mb-1">Kuantitas</p>
-                <p className="text-2xl font-bold">
-                  {asset.quantity} <span className="text-sm font-normal text-muted-foreground">
-                    {asset.type === "SAHAM" ? "Lot" : asset.type === "EMAS" ? "Gram" : "Unit"}
-                  </span>
-                </p>
-              </CardContent>
-            </Card>
-            <Card className="bg-card border-border">
-              <CardContent className="p-4 sm:p-6">
-                <p className="text-sm font-medium text-muted-foreground mb-1">Harga Beli</p>
-                <div className="text-2xl font-bold">
-                  <CurrencyDisplay value={asset.buyPrice || 0} />
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="bg-card border-border">
-              <CardContent className="p-4 sm:p-6">
-                <p className="text-sm font-medium text-muted-foreground mb-1">Total Modal</p>
-                <div className="text-2xl font-bold">
-                  <CurrencyDisplay value={totalModal} />
-                </div>
-              </CardContent>
-            </Card>
+            <div className="px-3 py-2 bg-muted/30 rounded-md">
+              <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-1">Kuantitas</p>
+              <p className="text-base font-bold text-foreground">
+                {asset.quantity} <span className="text-[10px] font-medium text-muted-foreground ml-1">
+                  {asset.type === "SAHAM" ? "Lot" : asset.type === "EMAS" ? "Gram" : "Unit"}
+                </span>
+              </p>
+            </div>
+            <div className="px-3 py-2 bg-muted/30 rounded-md">
+              <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-1">Tipe Aset</p>
+              <p className="text-base font-bold text-foreground capitalize">{asset.type}</p>
+            </div>
+            <div className="px-3 py-2 bg-muted/30 rounded-md">
+              <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-1">Platform</p>
+              <p className="text-base font-bold text-foreground">{asset.platformName || "-"}</p>
+            </div>
+            <div className="px-3 py-2 bg-muted/30 rounded-md">
+              <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-1">Tanggal Beli</p>
+              <p className="text-base font-bold text-foreground">
+                {asset.buyDate ? format(new Date(asset.buyDate), "dd MMM yy", { locale: localeId }) : "-"}
+              </p>
+            </div>
           </>
         ) : (
           <>
-            <Card className="bg-card border-border">
-              <CardContent className="p-4 sm:p-6">
-                <p className="text-sm font-medium text-muted-foreground mb-1">Platform</p>
-                <p className="text-2xl font-bold">{asset.platformName || "-"}</p>
-              </CardContent>
-            </Card>
-            <Card className="bg-card border-border md:col-span-2">
-              <CardContent className="p-4 sm:p-6">
-                <p className="text-sm font-medium text-muted-foreground mb-1">Modal Awal</p>
-                <div className="text-2xl font-bold">
-                  <CurrencyDisplay value={totalModal} />
-                </div>
-              </CardContent>
-            </Card>
+            <div className="px-3 py-2 bg-muted/30 rounded-md col-span-2">
+              <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-1">Platform</p>
+              <p className="text-base font-bold text-foreground">{asset.platformName || "-"}</p>
+            </div>
+            <div className="px-3 py-2 bg-muted/30 rounded-md col-span-2">
+              <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-1">Tipe Aset</p>
+              <p className="text-base font-bold text-foreground capitalize">{asset.type}</p>
+            </div>
           </>
         )}
-
-        {/* Common Cards */}
-        <Card className="bg-primary/5 border-primary/20 md:col-start-3 md:row-start-2">
-          <CardContent className="p-4 sm:p-6">
-            <p className="text-sm font-medium text-muted-foreground mb-1">Nilai Terkini</p>
-            <div className="text-2xl font-bold text-primary">
-              <CurrencyDisplay value={currentValue} />
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card className="bg-card border-border md:col-start-4 md:row-start-2">
-          <CardContent className="p-4 sm:p-6 flex flex-col justify-center h-full">
-            <p className="text-sm font-medium text-muted-foreground mb-2">Gain / Loss</p>
-            <GainLossBadge 
-              nominal={gainLoss.nominal} 
-              percent={gainLoss.percent} 
-              variant="text"
-              className="text-xl sm:text-2xl"
-            />
-          </CardContent>
-        </Card>
       </div>
 
-      <PerformanceChart valuations={asset.valuations} totalModal={totalModal} />
+      {/* Edge-to-Edge Chart Section (No Card Border) */}
+      <div className="py-4">
+        <h3 className="text-base font-bold text-foreground mb-4 pl-2 border-l-4 border-emerald-500">Pergerakan Valuasi</h3>
+        <PerformanceChart valuations={asset.valuations} totalModal={totalModal} />
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Valuation History */}
-        <Card className="bg-card border-border shadow-lg overflow-hidden">
-          <CardHeader className="pb-0 border-b border-border bg-card/50">
-            <CardTitle className="text-base font-medium mb-4">Histori Valuasi</CardTitle>
+        <Card className="bg-card border-border shadow-sm rounded-lg overflow-hidden flex flex-col">
+          <CardHeader className="py-4 px-5 border-b border-border/50">
+            <CardTitle className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Histori Valuasi</CardTitle>
           </CardHeader>
-          <div className="overflow-x-auto max-h-[400px]">
+          <div className="overflow-x-auto flex-1 max-h-[400px]">
             <Table>
-              <TableHeader className="bg-muted/30 sticky top-0 z-10 backdrop-blur-sm">
-                <TableRow className="border-border hover:bg-transparent">
-                  <TableHead className="font-medium">Tanggal</TableHead>
-                  <TableHead className="font-medium text-right">Nilai</TableHead>
-                  <TableHead className="font-medium text-right">G/L vs Modal</TableHead>
+              <TableHeader className="bg-muted/20 sticky top-0 z-10 backdrop-blur-md">
+                <TableRow className="border-border/50 hover:bg-transparent">
+                  <TableHead className="font-medium text-xs uppercase tracking-wider h-10 px-5">Tanggal</TableHead>
+                  <TableHead className="font-medium text-xs uppercase tracking-wider h-10 text-right">Nilai</TableHead>
+                  <TableHead className="font-medium text-xs uppercase tracking-wider h-10 text-right px-5">G/L vs Modal</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {asset.valuations.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={3} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={3} className="text-center py-12 text-muted-foreground">
                       Belum ada histori valuasi
                     </TableCell>
                   </TableRow>
@@ -186,16 +194,16 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
                   [...asset.valuations].reverse().map((val) => {
                     const valGL = calcGainLoss(val.value, totalModal);
                     return (
-                      <TableRow key={val.id} className="border-border hover:bg-muted/20">
-                        <TableCell className="text-sm">
+                      <TableRow key={val.id} className="border-border/50 hover:bg-muted/30 transition-colors">
+                        <TableCell className="px-5 py-3 text-sm text-foreground font-medium">
                           {format(new Date(val.recordedAt), "dd MMM yyyy", { locale: localeId })}
                         </TableCell>
-                        <TableCell className="text-right font-medium">
+                        <TableCell className="text-right py-3 font-medium text-sm text-foreground">
                           <CurrencyDisplay value={val.value} />
                         </TableCell>
-                        <TableCell className="text-right">
+                        <TableCell className="text-right py-3 px-5">
                           <div className="flex justify-end">
-                            <GainLossBadge nominal={valGL.nominal} percent={valGL.percent} />
+                            <GainLossBadge nominal={valGL.nominal} percent={valGL.percent} className="px-2 py-0.5 text-xs rounded-md" />
                           </div>
                         </TableCell>
                       </TableRow>

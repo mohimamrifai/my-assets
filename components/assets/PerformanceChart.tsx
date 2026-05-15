@@ -49,9 +49,9 @@ export function PerformanceChart({ valuations, totalModal }: PerformanceChartPro
   const CustomTooltip = ({ active, payload, label }: { active?: boolean, payload?: { payload: { fullDate: string }, value: number }[], label?: string }) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-[#1A1D2E] border border-[#2A2D3E] p-3 rounded-lg shadow-xl">
-          <p className="text-sm text-muted-foreground mb-1">{payload[0].payload.fullDate}</p>
-          <p className="text-lg font-bold text-[#F1F5F9] tabular-nums">
+        <div className="bg-card border border-border/50 p-4 rounded-md shadow-xl">
+          <p className="text-xs uppercase tracking-wider font-semibold text-muted-foreground mb-1">{payload[0].payload.fullDate}</p>
+          <p className="text-xl font-bold text-foreground tabular-nums">
             {formatIDR(payload[0].value)}
           </p>
         </div>
@@ -61,60 +61,56 @@ export function PerformanceChart({ valuations, totalModal }: PerformanceChartPro
   };
 
   return (
-    <Card className="bg-card border-border shadow-lg">
-      <CardHeader>
-        <CardTitle className="text-base font-medium">Tren Valuasi</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="h-[350px] w-full mt-4 min-h-[350px]">
-          <ResponsiveContainer width="100%" height="100%" minHeight={350}>
-            <AreaChart
-              data={data}
-              margin={{ top: 10, right: 10, left: 10, bottom: 0 }}
-            >
-              <defs>
-                <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#6366F1" stopOpacity={0.3}/>
-                  <stop offset="95%" stopColor="#6366F1" stopOpacity={0}/>
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#2A2D3E" />
-              <XAxis 
-                dataKey="formattedDate" 
-                axisLine={false}
-                tickLine={false}
-                tick={{ fill: '#64748B', fontSize: 12 }}
-                dy={10}
-              />
-              <YAxis 
-                hide 
-                domain={[minVal - padding, maxVal + padding]} 
-              />
-              <Tooltip content={<CustomTooltip />} />
-              <ReferenceLine 
-                y={totalModal} 
-                stroke="#64748B" 
-                strokeDasharray="3 3" 
-                label={{ 
-                  position: 'insideTopLeft', 
-                  value: 'Total Modal', 
-                  fill: '#64748B', 
-                  fontSize: 12 
-                }} 
-              />
-              <Area 
-                type="monotone" 
-                dataKey="value" 
-                stroke="#6366F1" 
-                strokeWidth={3}
-                fillOpacity={1} 
-                fill="url(#colorValue)" 
-                activeDot={{ r: 6, fill: "#6366F1", stroke: "#1A1D2E", strokeWidth: 2 }}
-              />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
-      </CardContent>
-    </Card>
+    <div className="bg-card border border-border/50 shadow-sm rounded-lg overflow-hidden pt-4 pb-2">
+      <div className="h-[300px] w-full min-h-[300px]">
+        <ResponsiveContainer width="100%" height="100%" minHeight={300}>
+          <AreaChart
+            data={data}
+            margin={{ top: 10, right: 0, left: 0, bottom: 20 }}
+          >
+            <defs>
+              <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#10B981" stopOpacity={0.3}/>
+                <stop offset="95%" stopColor="#10B981" stopOpacity={0}/>
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" strokeOpacity={0.5} />
+            <XAxis 
+              dataKey="formattedDate" 
+              axisLine={false}
+              tickLine={false}
+              tick={{ fill: 'var(--muted-foreground)', fontSize: 12 }}
+              dy={15}
+              minTickGap={30}
+            />
+            <YAxis 
+              hide 
+              domain={[minVal - padding, maxVal + padding]} 
+            />
+            <Tooltip content={<CustomTooltip />} />
+            <ReferenceLine 
+              y={totalModal} 
+              stroke="var(--muted-foreground)" 
+              strokeDasharray="3 3" 
+              label={{ 
+                position: 'insideTopLeft', 
+                value: 'Total Modal', 
+                fill: 'var(--muted-foreground)', 
+                fontSize: 12 
+              }} 
+            />
+            <Area 
+              type="monotone" 
+              dataKey="value" 
+              stroke="#10B981" 
+              strokeWidth={4}
+              fillOpacity={1} 
+              fill="url(#colorValue)" 
+              activeDot={{ r: 6, fill: "#10B981", stroke: "var(--background)", strokeWidth: 2 }}
+            />
+          </AreaChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
   );
 }
