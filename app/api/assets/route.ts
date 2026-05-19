@@ -27,7 +27,7 @@ export async function GET() {
     const enrichedAssets = allAssets.map((asset) => {
       const totalModal =
         asset.mode === "INVESTING"
-          ? calcTotalModal(asset.type, asset.quantity || 0, asset.buyPrice || 0)
+          ? calcTotalModal(asset.type, asset.quantity || 0, asset.buyPrice || 0, asset.isNominal, asset.initialCapital || 0)
           : asset.initialCapital || 0;
 
       const latestValuation = asset.valuations?.[0];
@@ -107,7 +107,7 @@ export async function POST(request: Request) {
         assetId: insertedAsset.id,
         value: initialValue,
         recordedAt,
-        notes: "Initial valuation",
+        notes: validatedData.notes,
       });
 
       await tx.insert(transactions).values({
@@ -115,7 +115,8 @@ export async function POST(request: Request) {
         type: transactionType,
         amount: initialValue,
         date: recordedAt,
-        notes: "Initial asset creation",
+        fundSource: validatedData.fundSource,
+        notes: validatedData.notes,
       });
 
       return insertedAsset;

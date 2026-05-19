@@ -2,7 +2,7 @@ import * as dotenv from "dotenv";
 dotenv.config({ path: ".env.local" });
 
 import { db } from "./index";
-import { assets, valuations, transactions, investingCash, investingCashTransactions, user } from "./schema";
+import { assets, valuations, transactions, user } from "./schema";
 import { auth } from "../auth";
 import { subDays } from "date-fns";
 

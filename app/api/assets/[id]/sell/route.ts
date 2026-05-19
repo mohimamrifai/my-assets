@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { assets, valuations, transactions, investingCash, investingCashTransactions } from "@/lib/db/schema";
+import { assets, valuations, transactions } from "@/lib/db/schema";
 import { eq, desc, and } from "drizzle-orm";
 import { calcTotalModal } from "@/lib/calculations";
 
@@ -129,31 +129,6 @@ export async function POST(
           recordedAt: new Date(date),
           notes: `Auto-update from SELL`,
         });
-
-      // 4. Add proceeds to Kas Investing
-      let cashRow = await tx.query.investingCash.findFirst({
-        where: eq(investingCash.userId, session.user.id)
-      });
-      if (!cashRow) {
-        const [newRow] = await tx.insert(investingCash).values({ balance: 0, userId: session.user.id }).returning();
-        cashRow = newRow;
-      }
-
-      const newBalance = cashRow.balance + amount;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const txAny = tx as any;
-      await txAny.update(investingCash)
-        .set({ balance: newBalance, updatedAt: new Date() })
-        .where(eq(investingCash.id, cashRow.id));
-
-      await tx.insert(investingCashTransactions).values({
-        userId: session.user.id,
-        type: "SELL_ASSET",
-        amount: amount,
-        referenceId: id,
-        date: new Date(date),
-        notes: `Hasil penjualan aset ${asset.name}`,
-      });
 
       return { realizedGain, isSoldOut };
     });

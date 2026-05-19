@@ -5,6 +5,7 @@ const baseAssetSchema = z.object({
   type: z.enum(["SAHAM", "CRYPTO", "EMAS", "REKSA_DANA", "P2P", "LAINNYA"]),
   mode: z.enum(["INVESTING", "TRADING"]),
   notes: z.string().optional(),
+  fundSource: z.string().optional(),
   
   isNominal: z.boolean().default(false),
   quantity: z.number().min(0).optional(),
@@ -31,6 +32,38 @@ export const createAssetSchema = baseAssetSchema.refine(data => {
 }, {
   message: "Nama platform wajib diisi untuk mode Trading",
   path: ["platformName"]
+}).refine(data => {
+  if (data.mode === "INVESTING") {
+    return data.isNominal === false;
+  }
+  return true;
+}, {
+  message: "Pencatatan Nominal/Kas dinonaktifkan sesuai revisi",
+  path: ["isNominal"]
+}).refine(data => {
+  if (data.mode === "INVESTING" && !data.isNominal) {
+    return data.quantity !== undefined && data.quantity > 0;
+  }
+  return true;
+}, {
+  message: "Kuantitas wajib diisi",
+  path: ["quantity"]
+}).refine(data => {
+  if (data.mode === "INVESTING" && !data.isNominal) {
+    return data.buyPrice !== undefined && data.buyPrice >= 0;
+  }
+  return true;
+}, {
+  message: "Harga beli wajib diisi",
+  path: ["buyPrice"]
+}).refine(data => {
+  if (data.mode === "TRADING") {
+    return data.initialCapital !== undefined && data.initialCapital > 0;
+  }
+  return true;
+}, {
+  message: "Nominal modal wajib diisi",
+  path: ["initialCapital"]
 });
 
 export const updateAssetSchema = baseAssetSchema.partial().extend({
@@ -40,6 +73,7 @@ export const updateAssetSchema = baseAssetSchema.partial().extend({
 export const createValuationSchema = z.object({
   value: z.number().positive("Value must be positive"),
   recordedAt: z.coerce.date(),
+  fundSource: z.string().optional(),
   notes: z.string().optional(),
 });
 

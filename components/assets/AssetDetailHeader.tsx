@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, Trash2, Edit, ArrowDownToLine, ArrowUpFromLine } from "lucide-react";
+import { ChevronLeft, Trash2, Edit, ArrowUpFromLine } from "lucide-react";
 import { toast } from "sonner";
 import { useState } from "react";
 
@@ -99,20 +99,12 @@ export function AssetDetailHeader({ asset }: AssetDetailHeaderProps) {
           </Button>
         )}
         {asset.mode === "TRADING" && (
-          <>
-            <Button variant="outline" asChild className="border-blue-500/20 text-blue-500 hover:bg-blue-500/10">
-              <Link href={`/assets/${asset.id}/transaction?type=deposit`}>
-                <ArrowDownToLine size={16} className="mr-2" />
-                Deposit
-              </Link>
-            </Button>
-            <Button variant="outline" asChild className="border-orange-500/20 text-orange-500 hover:bg-orange-500/10">
-              <Link href={`/assets/${asset.id}/transaction?type=withdraw`}>
-                <ArrowUpFromLine size={16} className="mr-2" />
-                Withdraw
-              </Link>
-            </Button>
-          </>
+          <Button variant="outline" asChild className="border-orange-500/20 text-orange-500 hover:bg-orange-500/10">
+            <Link href={`/assets/${asset.id}/transaction`}>
+              <ArrowUpFromLine size={16} className="mr-2" />
+              Withdraw
+            </Link>
+          </Button>
         )}
         <Button variant="secondary" asChild className="bg-primary/10 text-primary hover:bg-primary/20">
           <Link href={`/assets/${asset.id}/update`}>

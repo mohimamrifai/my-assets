@@ -16,6 +16,7 @@ import { createValuationSchema } from "@/lib/validations";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 import { NominalInput } from "@/components/ui/nominal-input";
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -45,6 +46,7 @@ export default function UpdateValuationPage({ params }: { params: Promise<{ id: 
     resolver: zodResolver(createValuationSchema) as any,
     defaultValues: {
       recordedAt: new Date(),
+      fundSource: "",
       notes: "",
     },
   });
@@ -252,6 +254,20 @@ export default function UpdateValuationPage({ params }: { params: Promise<{ id: 
                           />
                         </PopoverContent>
                       </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="fundSource"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col justify-end">
+                      <FormLabel>Sumber Dana (Opsional)</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Contoh: Rekening Utama / Saldo Platform" {...field} />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}

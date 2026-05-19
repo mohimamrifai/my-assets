@@ -11,7 +11,7 @@ import { OverviewChart } from "@/components/dashboard/OverviewChart";
 import { DashboardData } from "@/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, RefreshCw, Wallet } from "lucide-react";
+import { PlusCircle, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { HistoryFilter, TimeFilter, filterByTime } from "@/components/shared/HistoryFilter";
@@ -135,12 +135,6 @@ export default function DashboardPage() {
           <Link href="/assets/new">
             <PlusCircle size={18} className="mr-2" />
             Tambah Aset
-          </Link>
-        </Button>
-        <Button asChild variant="outline" className="bg-primary/5 text-primary border-primary/20 hover:bg-primary/10">
-          <Link href="/investing-cash">
-            <Wallet size={18} className="mr-2" />
-            Kas Investing
           </Link>
         </Button>
       </PageHeader>

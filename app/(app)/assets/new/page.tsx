@@ -21,7 +21,6 @@ import { Input } from "@/components/ui/input";
 import { NominalInput } from "@/components/ui/nominal-input";
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Switch } from "@/components/ui/switch";
 import { Calendar } from "@/components/ui/calendar";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { AssetType } from "@/types";
@@ -52,7 +51,6 @@ export default function NewAssetPage() {
   // eslint-disable-next-line react-hooks/incompatible-library
   const currentType = watch("type");
   const currentMode = watch("mode");
-  const isNominal = watch("isNominal");
   const currentQuantity = Number(watch("quantity")) || 0;
   const currentBuyPrice = Number(watch("buyPrice")) || 0;
 
@@ -222,7 +220,7 @@ export default function NewAssetPage() {
               control={form.control}
               name="name"
               render={({ field }) => (
-                <FormItem className="md:col-span-2">
+                <FormItem>
                   <FormLabel>Nama Aset / Ticker</FormLabel>
                   <FormControl>
                     <Input placeholder="Contoh: BBCA, Bitcoin, Antam, Reksadana Sucor" {...field} />
@@ -234,97 +232,58 @@ export default function NewAssetPage() {
 
             <FormField
               control={form.control}
-              name="isNominal"
+              name="platformName"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 md:col-span-2 bg-muted/20">
-                  <div className="space-y-0.5">
-                    <FormLabel className="text-base">Pencatatan Berbasis Nominal / Kas</FormLabel>
-                    <FormDescription>
-                      Aktifkan jika Anda ingin mencatat investasi ini berdasarkan Total Nominal Uang saja (tanpa kuantitas & harga per unit).
-                    </FormDescription>
-                  </div>
+                <FormItem>
+                  <FormLabel>Nama Platform / Bursa (Opsional)</FormLabel>
                   <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={(val) => {
-                        field.onChange(val);
-                        // Reset the irrelevant fields when switching
-                        if (val) {
-                          setValue("quantity", "" as unknown as number);
-                          setValue("buyPrice", "" as unknown as number);
-                        } else {
-                          setValue("initialCapital", "" as unknown as number);
-                        }
-                      }}
-                    />
+                    <Input placeholder="Contoh: Ajaib, Indodax, Bibit" {...field} />
                   </FormControl>
+                  <FormMessage />
                 </FormItem>
               )}
             />
 
-            {!isNominal ? (
-              <>
-                <FormField
-                  control={form.control}
-                  name="quantity"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{qtyLabel}</FormLabel>
-                      <FormControl>
-                        <NominalInput 
-                          placeholder="0" 
-                          {...field} 
-                        />
-                      </FormControl>
-                      {qtyHelper && <FormDescription>{qtyHelper}</FormDescription>}
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="buyPrice"
-                  render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Harga Beli per Unit ({currency === "USD" ? "$" : "Rp"})</FormLabel>
-                    <FormControl>
-                        <NominalInput 
-                          placeholder="0" 
-                          {...field} 
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+            <FormField
+              control={form.control}
+              name="quantity"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{qtyLabel}</FormLabel>
+                  <FormControl>
+                    <NominalInput 
+                      placeholder="0" 
+                      {...field} 
+                    />
+                  </FormControl>
+                  {qtyHelper && <FormDescription>{qtyHelper}</FormDescription>}
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="buyPrice"
+              render={({ field }) => (
+                <FormItem>
+                <FormLabel>Harga Beli per Unit ({currency === "USD" ? "$" : "Rp"})</FormLabel>
+                <FormControl>
+                    <NominalInput 
+                      placeholder="0" 
+                      {...field} 
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-                <div className="md:col-span-2 p-4 rounded-lg bg-primary/5 border border-primary/20 flex items-center justify-between">
-                  <span className="text-sm font-medium">Estimasi Total Modal:</span>
-                  <span className="text-lg font-bold text-primary">
-                    {formatCurrency(calculatedTotal, currency)}
-                  </span>
-                </div>
-              </>
-            ) : (
-              <FormField
-                control={form.control}
-                name="initialCapital"
-                render={({ field }) => (
-                  <FormItem className="md:col-span-2">
-                    <FormLabel>Total Modal Nominal ({currency === "USD" ? "$" : "Rp"})</FormLabel>
-                    <FormControl>
-                      <NominalInput 
-                        placeholder="0" 
-                        {...field} 
-                        className="text-lg py-6"
-                      />
-                    </FormControl>
-                    <FormDescription>Jumlah uang yang diinvestasikan pada aset ini.</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            )}
+            <div className="md:col-span-2 p-4 rounded-lg bg-primary/5 border border-primary/20 flex items-center justify-between">
+              <span className="text-sm font-medium">Estimasi Total Modal:</span>
+              <span className="text-lg font-bold text-primary">
+                {formatCurrency(calculatedTotal, currency)}
+              </span>
+            </div>
             
             <FormField
               control={form.control}
@@ -453,6 +412,21 @@ export default function NewAssetPage() {
             />
           </div>
         )}
+
+        <FormField
+          control={form.control}
+          name="fundSource"
+          render={({ field }) => (
+            <FormItem className="mt-6">
+              <FormLabel>Sumber Dana (Opsional)</FormLabel>
+              <FormControl>
+                <Input placeholder="Contoh: Tabungan Bank / Rekening Utama" {...field} />
+              </FormControl>
+              <FormDescription>Ditampilkan pada riwayat transaksi (kolom Sumber / Tujuan Dana).</FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
         <FormField
           control={form.control}

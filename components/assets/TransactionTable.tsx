@@ -48,7 +48,7 @@ export function TransactionTable({ transactions, assetName }: TransactionTablePr
                 <TableHead className="font-medium text-xs uppercase tracking-wider h-10 px-5">Tanggal</TableHead>
                 <TableHead className="font-medium text-xs uppercase tracking-wider h-10">Tipe</TableHead>
                 <TableHead className="font-medium text-xs uppercase tracking-wider h-10 text-right">Nominal</TableHead>
-                <TableHead className="font-medium text-xs uppercase tracking-wider h-10">Sumber Dana</TableHead>
+                <TableHead className="font-medium text-xs uppercase tracking-wider h-10">Sumber / Tujuan Dana</TableHead>
                 {assetName && assetName === "Global" && (
                   <TableHead className="font-medium text-xs uppercase tracking-wider h-10">Aset</TableHead>
                 )}

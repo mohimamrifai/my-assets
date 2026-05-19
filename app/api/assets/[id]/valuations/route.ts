@@ -57,6 +57,7 @@ export async function POST(
           type: "UPDATE",
           amount: calculatedValue,
           date: validatedData.recordedAt,
+          fundSource: validatedData.fundSource,
           notes: validatedData.notes || "Value update",
         });
 

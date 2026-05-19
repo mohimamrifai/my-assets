@@ -20,6 +20,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Asset, Valuation } from "@/types";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Input } from "@/components/ui/input";
 
 import { formatCurrency } from "@/lib/formatters";
 import { calcTotalModal } from "@/lib/calculations";
@@ -42,6 +43,7 @@ export default function SellAssetPage({ params }: { params: Promise<{ id: string
   const [amount, setAmount] = useState<number | undefined>(undefined);
   const [quantitySold, setQuantitySold] = useState<number | undefined>(undefined);
   const [date, setDate] = useState<Date>(new Date());
+  const [fundSource, setFundSource] = useState("");
   const [notes, setNotes] = useState("");
 
   useEffect(() => {
@@ -97,6 +99,7 @@ export default function SellAssetPage({ params }: { params: Promise<{ id: string
           amount,
           quantitySold: sellAll ? asset?.quantity : quantitySold,
           date,
+          fundSource,
           notes,
         }),
       });
@@ -202,11 +205,20 @@ export default function SellAssetPage({ params }: { params: Promise<{ id: string
                 className="text-lg py-6 border-emerald-500/50 focus-visible:ring-emerald-500"
               />
               <p className="text-xs text-muted-foreground mt-1">
-                Dana ini akan otomatis masuk ke Saldo Kas Investing.
+                Dana hasil jual dicatat sebagai penjualan aset pada riwayat transaksi.
               </p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <Label>Tujuan Dana Masuk (Opsional)</Label>
+                <Input
+                  value={fundSource}
+                  onChange={(e) => setFundSource(e.target.value)}
+                  placeholder="Contoh: Saldo RDN / Rekening Bank"
+                />
+              </div>
+
               <div className="flex flex-col space-y-2 justify-end">
                 <Label>Tanggal Penjualan</Label>
                 <Popover>
