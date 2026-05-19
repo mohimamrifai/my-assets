@@ -13,12 +13,14 @@ export const cashTransactionTypeEnum = pgEnum("cash_transaction_type", [
 
 export const investingCash = pgTable("investing_cash", {
   id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId: text("user_id").notNull().references(() => user.id, { onDelete: "cascade" }),
   balance: real("balance").notNull().default(0),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 export const investingCashTransactions = pgTable("investing_cash_transactions", {
   id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId: text("user_id").notNull().references(() => user.id, { onDelete: "cascade" }),
   type: cashTransactionTypeEnum("type").notNull(),
   amount: real("amount").notNull(),
   referenceId: text("reference_id"), // Can be assetId if related to BUY/SELL
@@ -29,6 +31,7 @@ export const investingCashTransactions = pgTable("investing_cash_transactions", 
 
 export const assets = pgTable("assets", {
   id:              text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId:          text("user_id").notNull().references(() => user.id, { onDelete: "cascade" }),
   name:            text("name").notNull(),
   type:            assetTypeEnum("type").notNull(),
   mode:            assetModeEnum("mode").notNull(),
@@ -168,6 +171,9 @@ export const verification = pgTable(
 export const userRelations = relations(user, ({ many }) => ({
   sessions: many(session),
   accounts: many(account),
+  assets: many(assets),
+  investingCash: many(investingCash),
+  investingCashTransactions: many(investingCashTransactions),
 }));
 
 export const sessionRelations = relations(session, ({ one }) => ({

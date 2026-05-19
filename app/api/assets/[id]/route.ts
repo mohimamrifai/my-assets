@@ -4,7 +4,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { assets, valuations, transactions } from "@/lib/db/schema";
 import { updateAssetSchema } from "@/lib/validations";
-import { eq, asc, desc } from "drizzle-orm";
+import { eq, asc, desc, and } from "drizzle-orm";
 
 export async function GET(
   request: Request,
@@ -19,7 +19,7 @@ export async function GET(
     const { id } = await params;
 
     const asset = await db.query.assets.findFirst({
-      where: eq(assets.id, id),
+      where: and(eq(assets.id, id), eq(assets.userId, session.user.id)),
       with: {
         valuations: {
           orderBy: [asc(valuations.recordedAt)],
@@ -72,7 +72,7 @@ export async function PUT(
         initialCapital: validatedData.initialCapital,
         updatedAt: new Date(),
       })
-      .where(eq(assets.id, id))
+      .where(and(eq(assets.id, id), eq(assets.userId, session.user.id)))
       .returning();
 
     if (!updatedAsset) {
@@ -100,7 +100,7 @@ export async function DELETE(
 
     const [deletedAsset] = await db
       .delete(assets)
-      .where(eq(assets.id, id))
+      .where(and(eq(assets.id, id), eq(assets.userId, session.user.id)))
       .returning();
 
     if (!deletedAsset) {

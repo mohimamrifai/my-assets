@@ -2,9 +2,9 @@ import { NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { valuations, transactions } from "@/lib/db/schema";
+import { valuations, transactions, assets } from "@/lib/db/schema";
 import { calcTotalModal, calcGainLoss } from "@/lib/calculations";
-import { desc } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 
 export async function GET() {
   try {
@@ -14,6 +14,7 @@ export async function GET() {
     }
 
     const allAssets = await db.query.assets.findMany({
+      where: eq(assets.userId, session.user.id),
       with: {
         valuations: {
           orderBy: [desc(valuations.recordedAt)],

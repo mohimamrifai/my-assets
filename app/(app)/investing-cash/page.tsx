@@ -131,41 +131,41 @@ export default function InvestingCashPage() {
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-1 space-y-6">
-          <Card className="bg-primary/5 border-primary/20 shadow-sm overflow-hidden relative">
-            <div className="absolute top-0 right-0 p-4 opacity-10">
-              <Wallet size={100} />
-            </div>
+          <Card className="border-border shadow-sm">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
-                Saldo Tersedia
-              </CardTitle>
+              <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                <Wallet size={16} />
+                <CardTitle className="text-sm font-medium">
+                  Total Kas Aktif
+                </CardTitle>
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-primary tracking-tight">
+              <div className="text-3xl font-semibold tracking-tight text-foreground">
                 {formatCurrency(balance || 0, currency)}
               </div>
             </CardContent>
           </Card>
 
           <Card className="border-border shadow-sm">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-lg">Transaksi Kas</CardTitle>
+            <CardHeader className="pb-4 border-b border-border/40">
+              <CardTitle className="text-base font-semibold">Manajemen Dana</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-6">
               <Tabs 
                 value={currentType} 
                 onValueChange={(val) => setValue("type", val as "DEPOSIT" | "WITHDRAWAL")}
                 className="w-full mb-6"
               >
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="DEPOSIT" className="data-[state=active]:bg-blue-500 data-[state=active]:text-white">
-                    <ArrowDownToLine size={16} className="mr-2" />
+                <TabsList className="grid w-full grid-cols-2 p-1">
+                  <TabsTrigger value="DEPOSIT" className="text-xs font-medium">
+                    <ArrowDownToLine size={14} className="mr-2" />
                     Top Up
                   </TabsTrigger>
-                  <TabsTrigger value="WITHDRAWAL" className="data-[state=active]:bg-orange-500 data-[state=active]:text-white">
-                    <ArrowUpFromLine size={16} className="mr-2" />
+                  <TabsTrigger value="WITHDRAWAL" className="text-xs font-medium">
+                    <ArrowUpFromLine size={14} className="mr-2" />
                     Tarik
                   </TabsTrigger>
                 </TabsList>
@@ -238,7 +238,10 @@ export default function InvestingCashPage() {
                     )}
                   />
 
-                  <Button type="submit" disabled={isSubmitting || isInsufficient || currentAmount <= 0} className="w-full">
+                  <Button type="submit" disabled={isSubmitting || isInsufficient || currentAmount <= 0} className={cn(
+                    "w-full font-medium",
+                    currentType === "DEPOSIT" ? "" : "bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+                  )}>
                     {isSubmitting ? (
                       <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Memproses...</>
                     ) : (
@@ -252,47 +255,50 @@ export default function InvestingCashPage() {
         </div>
 
         <div className="lg:col-span-2">
-          <Card className="h-full border-border shadow-sm flex flex-col">
-            <CardHeader>
-              <CardTitle className="text-lg">Riwayat Kas</CardTitle>
+          <Card className="h-full border-border shadow-sm flex flex-col overflow-hidden">
+            <CardHeader className="border-b border-border/40 pb-4">
+              <CardTitle className="text-base font-semibold">Riwayat Kas</CardTitle>
             </CardHeader>
             <div className="flex-1 overflow-auto max-h-[600px]">
               <Table>
-                <TableHeader className="bg-muted/20 sticky top-0">
-                  <TableRow>
-                    <TableHead>Tanggal</TableHead>
-                    <TableHead>Tipe</TableHead>
-                    <TableHead className="text-right">Nominal</TableHead>
-                    <TableHead>Catatan</TableHead>
+                <TableHeader className="bg-muted/30 sticky top-0">
+                  <TableRow className="border-b-border/40">
+                    <TableHead className="text-xs font-medium text-muted-foreground h-10">Tanggal</TableHead>
+                    <TableHead className="text-xs font-medium text-muted-foreground h-10">Tipe</TableHead>
+                    <TableHead className="text-right text-xs font-medium text-muted-foreground h-10">Nominal</TableHead>
+                    <TableHead className="text-xs font-medium text-muted-foreground h-10">Catatan</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {transactions.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
-                        Belum ada transaksi kas
+                    <TableRow className="hover:bg-transparent border-0">
+                      <TableCell colSpan={4} className="text-center py-12 text-muted-foreground/60">
+                        <div className="flex flex-col items-center justify-center space-y-3">
+                          <Wallet size={32} className="opacity-20" />
+                          <span className="text-sm">Belum ada transaksi kas</span>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ) : (
                     transactions.map((tx) => (
-                      <TableRow key={tx.id}>
-                        <TableCell className="font-medium">
+                      <TableRow key={tx.id} className="border-b-border/30 hover:bg-muted/30 transition-colors">
+                        <TableCell className="font-medium text-sm text-foreground/80">
                           {format(new Date(tx.date), "dd MMM yyyy", { locale: localeId })}
                         </TableCell>
                         <TableCell>
                           <Badge variant="outline" className={cn(
-                            "text-[10px] uppercase",
+                            "text-[10px] font-medium px-2 py-0.5",
                             tx.type === "DEPOSIT" || tx.type === "SELL_ASSET" ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" : "bg-orange-500/10 text-orange-600 border-orange-500/20"
                           )}>
                             {tx.type.replace("_", " ")}
                           </Badge>
                         </TableCell>
-                        <TableCell className="text-right font-medium">
-                          <span className={tx.type === "DEPOSIT" || tx.type === "SELL_ASSET" ? "text-emerald-600" : ""}>
+                        <TableCell className="text-right font-medium text-sm">
+                          <span className={tx.type === "DEPOSIT" || tx.type === "SELL_ASSET" ? "text-emerald-600" : "text-foreground"}>
                             {tx.type === "DEPOSIT" || tx.type === "SELL_ASSET" ? "+" : "-"} {formatCurrency(tx.amount, currency)}
                           </span>
                         </TableCell>
-                        <TableCell className="text-sm text-muted-foreground max-w-[200px] truncate">
+                        <TableCell className="text-sm text-muted-foreground/80 max-w-[200px] truncate">
                           {tx.notes || "-"}
                         </TableCell>
                       </TableRow>

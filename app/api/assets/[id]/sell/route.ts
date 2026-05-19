@@ -3,7 +3,7 @@ import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { assets, valuations, transactions, investingCash, investingCashTransactions } from "@/lib/db/schema";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, and } from "drizzle-orm";
 import { calcTotalModal } from "@/lib/calculations";
 
 export async function POST(
@@ -27,7 +27,7 @@ export async function POST(
     const { amount, quantitySold, date, notes } = body;
 
     const asset = await db.query.assets.findFirst({
-      where: eq(assets.id, id),
+      where: and(eq(assets.id, id), eq(assets.userId, session.user.id)),
       with: {
         valuations: {
           orderBy: [desc(valuations.recordedAt)],
@@ -105,7 +105,7 @@ export async function POST(
           status: isSoldOut ? "SOLD" : "ACTIVE",
           updatedAt: new Date() 
         })
-        .where(eq(assets.id, id));
+        .where(and(eq(assets.id, id), eq(assets.userId, session.user.id)));
 
       // 2. Record Transaction
       await tx
@@ -131,9 +131,11 @@ export async function POST(
         });
 
       // 4. Add proceeds to Kas Investing
-      let cashRow = await tx.query.investingCash.findFirst();
+      let cashRow = await tx.query.investingCash.findFirst({
+        where: eq(investingCash.userId, session.user.id)
+      });
       if (!cashRow) {
-        const [newRow] = await tx.insert(investingCash).values({ balance: 0 }).returning();
+        const [newRow] = await tx.insert(investingCash).values({ balance: 0, userId: session.user.id }).returning();
         cashRow = newRow;
       }
 
@@ -145,6 +147,7 @@ export async function POST(
         .where(eq(investingCash.id, cashRow.id));
 
       await tx.insert(investingCashTransactions).values({
+        userId: session.user.id,
         type: "SELL_ASSET",
         amount: amount,
         referenceId: id,

@@ -13,14 +13,17 @@ export async function GET() {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 
-    let cashRow = await db.query.investingCash.findFirst();
+    let cashRow = await db.query.investingCash.findFirst({
+      where: eq(investingCash.userId, session.user.id)
+    });
     if (!cashRow) {
       // Create it if it doesn't exist
-      const [newRow] = await db.insert(investingCash).values({ balance: 0 }).returning();
+      const [newRow] = await db.insert(investingCash).values({ balance: 0, userId: session.user.id }).returning();
       cashRow = newRow;
     }
 
     const recentTransactions = await db.query.investingCashTransactions.findMany({
+      where: eq(investingCashTransactions.userId, session.user.id),
       orderBy: (tx, { desc }) => [desc(tx.date), desc(tx.createdAt)],
       limit: 10,
     });
@@ -49,9 +52,11 @@ export async function POST(request: Request) {
     const validatedData = createTransactionSchema.parse(body);
 
     const result = await db.transaction(async (tx) => {
-      let cashRow = await tx.query.investingCash.findFirst();
+      let cashRow = await tx.query.investingCash.findFirst({
+        where: eq(investingCash.userId, session.user.id)
+      });
       if (!cashRow) {
-        const [newRow] = await tx.insert(investingCash).values({ balance: 0 }).returning();
+        const [newRow] = await tx.insert(investingCash).values({ balance: 0, userId: session.user.id }).returning();
         cashRow = newRow;
       }
 
@@ -72,6 +77,7 @@ export async function POST(request: Request) {
         .where(eq(investingCash.id, cashRow.id));
 
       const [insertedTx] = await tx.insert(investingCashTransactions).values({
+        userId: session.user.id,
         type: validatedData.type as "DEPOSIT" | "WITHDRAWAL",
         amount: validatedData.amount,
         date: validatedData.date,

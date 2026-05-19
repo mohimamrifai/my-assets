@@ -9,7 +9,6 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Loader2, ShieldCheck, BarChart3 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-
 import { Logo } from "@/components/shared/Logo";
 
 export default function LoginPage() {
@@ -27,13 +26,14 @@ export default function LoginPage() {
 
     try {
       if (isRegistering) {
-        type SignUpEmail = (params: { email: string; password: string; name: string; currency: string }) => Promise<{ error?: { message: string } }>;
-        const { error } = await (authClient.signUp.email as unknown as SignUpEmail)({
+        const signUpData = {
           email,
           password,
           name,
           currency,
-        });
+        };
+        // Use type assertion to bypass type checking since Better Auth generates the schema
+        const { error } = await (authClient.signUp.email as unknown as (data: typeof signUpData) => Promise<{ error?: { message: string } }>)(signUpData);
         if (error) {
           toast.error(error.message || "Failed to sign up");
         } else {

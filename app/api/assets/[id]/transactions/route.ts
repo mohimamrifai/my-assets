@@ -4,7 +4,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { assets, valuations, transactions } from "@/lib/db/schema";
 import { createTransactionSchema } from "@/lib/validations";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, and } from "drizzle-orm";
 
 export async function POST(
   request: Request,
@@ -21,7 +21,7 @@ export async function POST(
     const validatedData = createTransactionSchema.parse(body);
 
     const asset = await db.query.assets.findFirst({
-      where: eq(assets.id, id),
+      where: and(eq(assets.id, id), eq(assets.userId, session.user.id)),
       with: {
         valuations: {
           orderBy: [desc(valuations.recordedAt)],
@@ -62,7 +62,7 @@ export async function POST(
       await tx
         .update(assets)
         .set({ initialCapital: newCapital, updatedAt: new Date() })
-        .where(eq(assets.id, id));
+        .where(and(eq(assets.id, id), eq(assets.userId, session.user.id)));
 
       // 2. Record Transaction
       const [insertedTransaction] = await tx

@@ -1,7 +1,10 @@
+"use client";
+
 import { TrendingDown, TrendingUp } from "lucide-react";
-import { formatIDR, formatPercent } from "@/lib/formatters";
+import { formatCurrency, formatPercent } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { useCurrency } from "@/components/providers/CurrencyProvider";
 
 interface GainLossBadgeProps {
   nominal: number;
@@ -20,6 +23,7 @@ export function GainLossBadge({
   showPercent = true,
   variant = "badge"
 }: GainLossBadgeProps) {
+  const { currency } = useCurrency();
   const isPositive = nominal >= 0;
   
   const content = (
@@ -30,7 +34,7 @@ export function GainLossBadge({
         <TrendingDown size={16} data-icon="inline-start" className="mr-1" aria-hidden="true" />
       )}
       <span>
-        {showNominal && formatIDR(Math.abs(nominal))}
+        {showNominal && formatCurrency(Math.abs(nominal), currency)}
         {showNominal && showPercent && " ("}
         {showPercent && formatPercent(percent)}
         {showNominal && showPercent && ")"}

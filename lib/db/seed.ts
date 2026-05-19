@@ -2,7 +2,7 @@ import * as dotenv from "dotenv";
 dotenv.config({ path: ".env.local" });
 
 import { db } from "./index";
-import { assets, valuations, transactions } from "./schema";
+import { assets, valuations, transactions, investingCash, investingCashTransactions, user } from "./schema";
 import { auth } from "../auth";
 import { subDays } from "date-fns";
 
@@ -64,8 +64,29 @@ async function seed() {
       });
       console.log("Admin user created: admin@myassets.com / password123");
     } catch {
-      console.log("Admin user might already exist, proceeding...");
+      console.log("Admin user creation error caught, proceeding...");
     }
+
+    let adminUser = await db.query.user.findFirst({
+      where: (users, { eq }) => eq(users.email, "admin@myassets.com")
+    });
+
+    if (!adminUser) {
+      console.log("Admin user might already exist, proceeding...");
+      // Let's create an explicit admin user record if BetterAuth hasn't
+      // In seed script context, we might need a raw DB insert for the user if auth isn't fully working
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const userResult: any = await db.insert(user).values({
+        id: crypto.randomUUID(),
+        name: "Admin User",
+        email: "admin@myassets.com",
+        emailVerified: true,
+        currency: "IDR"
+      }).returning();
+      adminUser = userResult[0];
+    }
+
+    const userId = adminUser!.id;
 
     // Clear existing data for a clean slate
     await db.delete(transactions);
@@ -75,7 +96,7 @@ async function seed() {
     const now = new Date();
 
     for (const asset of seedAssets) {
-      const [newAsset] = await db.insert(assets).values(asset).returning();
+      const [newAsset] = await db.insert(assets).values({ ...asset, userId }).returning();
       
       let initialValue = 0;
       let multiplier = 1;

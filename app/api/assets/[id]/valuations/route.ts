@@ -4,7 +4,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { assets, valuations, transactions } from "@/lib/db/schema";
 import { createValuationSchema } from "@/lib/validations";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { calcCurrentValue } from "@/lib/calculations";
 
 export async function POST(
@@ -22,7 +22,7 @@ export async function POST(
     const validatedData = createValuationSchema.parse(body);
 
     const asset = await db.query.assets.findFirst({
-      where: eq(assets.id, id),
+      where: and(eq(assets.id, id), eq(assets.userId, session.user.id)),
     });
 
     if (!asset) {

@@ -5,7 +5,7 @@ import { db } from "@/lib/db";
 import { assets, valuations, transactions } from "@/lib/db/schema";
 import { createAssetSchema } from "@/lib/validations";
 import { calcTotalModal, calcGainLoss } from "@/lib/calculations";
-import { desc } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 
 export async function GET() {
   try {
@@ -15,6 +15,7 @@ export async function GET() {
     }
 
     const allAssets = await db.query.assets.findMany({
+      where: eq(assets.userId, session.user.id),
       with: {
         valuations: {
           orderBy: [desc(valuations.recordedAt)],
@@ -65,6 +66,7 @@ export async function POST(request: Request) {
       const [insertedAsset] = await tx
         .insert(assets)
         .values({
+          userId: session.user.id,
           name: validatedData.name || "",
           type: validatedData.type,
           mode: validatedData.mode,
