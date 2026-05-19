@@ -110,6 +110,6 @@ export async function DELETE(
     return NextResponse.json({ success: true, data: deletedAsset });
   } catch (error) {
     console.error("Error deleting asset:", error);
-    return NextResponse.json({ success: false, error: "Internal Server Error" }, { status: 500 });
+    return NextResponse.json({ success: false, error: "Failed to delete asset" }, { status: 400 });
   }
 }

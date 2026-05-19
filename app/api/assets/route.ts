@@ -4,10 +4,10 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { assets, valuations, transactions } from "@/lib/db/schema";
 import { createAssetSchema } from "@/lib/validations";
-import { calcCurrentValue, calcTotalModal, calcGainLoss } from "@/lib/calculations";
+import { calcTotalModal, calcGainLoss } from "@/lib/calculations";
 import { desc } from "drizzle-orm";
 
-export async function GET(request: Request) {
+export async function GET() {
   try {
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session) {
@@ -69,6 +69,7 @@ export async function POST(request: Request) {
           type: validatedData.type,
           mode: validatedData.mode,
           notes: validatedData.notes,
+          isNominal: validatedData.isNominal,
           quantity: validatedData.quantity,
           buyPrice: validatedData.buyPrice,
           buyDate: validatedData.buyDate,
@@ -80,8 +81,18 @@ export async function POST(request: Request) {
       let initialValue = 0;
       let transactionType: "BUY" | "DEPOSIT" = "BUY";
 
+      // For Investing:
+      // If it's nominal, the initialValue is initialCapital
+      // If it's quantity based, the initialValue is quantity * buyPrice * multiplier
+      // For Trading:
+      // initialValue is initialCapital
+      
       if (insertedAsset.mode === "INVESTING") {
-        initialValue = calcTotalModal(insertedAsset.type, insertedAsset.quantity || 0, insertedAsset.buyPrice || 0);
+        if (validatedData.isNominal) {
+          initialValue = insertedAsset.initialCapital || 0;
+        } else {
+          initialValue = calcTotalModal(insertedAsset.type, insertedAsset.quantity || 0, insertedAsset.buyPrice || 0);
+        }
         transactionType = "BUY";
       } else if (insertedAsset.mode === "TRADING") {
         initialValue = insertedAsset.initialCapital || 0;
@@ -111,6 +122,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: true, data: newAsset });
   } catch (error) {
     console.error("Error creating asset:", error);
-    return NextResponse.json({ success: false, error: "Failed to create asset" }, { status: 400 });
+    return NextResponse.json({ success: false, error: error instanceof Error ? error.message : "Failed to create asset" }, { status: 400 });
   }
 }

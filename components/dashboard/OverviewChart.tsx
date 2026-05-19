@@ -3,16 +3,60 @@
 import { useMemo } from "react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip, Legend } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatIDR } from "@/lib/formatters";
+import { useCurrency } from "@/components/providers/CurrencyProvider";
+import { formatCurrency } from "@/lib/formatters";
 
-interface OverviewChartProps {
-  assets: any[]; // Using any to avoid complex type import for now, or use proper type
+interface ChartAsset {
+  name?: string | null;
+  platformName?: string | null;
+  totalModal?: number;
+  currentValue?: number;
 }
 
+interface OverviewChartProps {
+  assets: ChartAsset[];
+}
+
+interface AggregatedData {
+  name: string;
+  "Total Modal": number;
+  "Nilai Terkini": number;
+  currentValue: number;
+}
+
+interface TooltipPayload {
+  color: string;
+  name: string;
+  value: number;
+}
+
+const CustomTooltipContent = ({ active, payload, label, currency }: { active?: boolean, payload?: TooltipPayload[], label?: string, currency: "IDR" | "USD" }) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-[#1A1D2E] border border-[#2A2D3E] p-3 rounded-lg shadow-xl min-w-[200px]">
+        <p className="text-sm font-medium text-muted-foreground mb-3">{label}</p>
+        {payload.map((entry, index) => (
+          <div key={index} className="flex justify-between items-center text-sm mb-1.5 last:mb-0">
+            <div className="flex items-center gap-2">
+              <div className="size-2.5 rounded-full" style={{ backgroundColor: entry.color }} />
+              <span className="text-[#F1F5F9]">{entry.name}</span>
+            </div>
+            <span className="font-bold text-[#F1F5F9] tabular-nums">
+              {formatCurrency(entry.value, currency)}
+            </span>
+          </div>
+        ))}
+      </div>
+    );
+  }
+  return null;
+};
+
 export function OverviewChart({ assets }: OverviewChartProps) {
+  const { currency } = useCurrency();
   const data = useMemo(() => {
     // 1. Kelompokkan aset berdasarkan nama agar tidak ada duplikasi di grafik
-    const aggregated = assets.reduce((acc: Record<string, any>, asset) => {
+    const aggregated = assets.reduce((acc: Record<string, AggregatedData>, asset: ChartAsset) => {
       const name = asset.name || asset.platformName || "Unknown";
       
       if (!acc[name]) {
@@ -33,38 +77,17 @@ export function OverviewChart({ assets }: OverviewChartProps) {
 
     // 2. Ubah object menjadi array, sort berdasarkan nilai terkini terbesar, ambil top 6
     const sorted = Object.values(aggregated)
-      .sort((a: any, b: any) => b.currentValue - a.currentValue)
+      .sort((a: AggregatedData, b: AggregatedData) => b.currentValue - a.currentValue)
       .slice(0, 6);
     
     // 3. Hapus properti currentValue sementara karena tidak dibutuhkan oleh Recharts display
-    return sorted.map(({ currentValue, ...rest }: any) => rest);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    return sorted.map(({ currentValue, ...rest }: AggregatedData) => rest);
   }, [assets]);
 
   if (data.length === 0) {
     return null;
   }
-
-  const CustomTooltip = ({ active, payload, label }: any) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="bg-[#1A1D2E] border border-[#2A2D3E] p-3 rounded-lg shadow-xl min-w-[200px]">
-          <p className="text-sm font-medium text-muted-foreground mb-3">{label}</p>
-          {payload.map((entry: any, index: number) => (
-            <div key={index} className="flex justify-between items-center text-sm mb-1.5 last:mb-0">
-              <div className="flex items-center gap-2">
-                <div className="size-2.5 rounded-full" style={{ backgroundColor: entry.color }} />
-                <span className="text-[#F1F5F9]">{entry.name}</span>
-              </div>
-              <span className="font-bold text-[#F1F5F9] tabular-nums">
-                {formatIDR(entry.value)}
-              </span>
-            </div>
-          ))}
-        </div>
-      );
-    }
-    return null;
-  };
 
   return (
     <Card className="bg-card border-border shadow-sm">
@@ -92,7 +115,7 @@ export function OverviewChart({ assets }: OverviewChartProps) {
               <YAxis 
                 hide 
               />
-              <Tooltip content={<CustomTooltip />} cursor={{ fill: '#2A2D3E', opacity: 0.2 }} />
+              <Tooltip content={<CustomTooltipContent currency={currency} />} cursor={{ fill: '#2A2D3E', opacity: 0.2 }} />
               <Legend 
                 verticalAlign="top" 
                 height={36}

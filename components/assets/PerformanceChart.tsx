@@ -7,14 +7,30 @@ import { id as localeId } from "date-fns/locale";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Valuation } from "@/types";
-import { formatIDR } from "@/lib/formatters";
+import { useCurrency } from "@/components/providers/CurrencyProvider";
+import { formatCurrency } from "@/lib/formatters";
 
 interface PerformanceChartProps {
   valuations: Valuation[];
   totalModal: number;
 }
 
+const CustomTooltipContent = ({ active, payload, currency }: { active?: boolean, payload?: { payload: { fullDate: string }, value: number }[], label?: string, currency: "IDR" | "USD" }) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-card border border-border/50 p-4 rounded-md shadow-xl">
+        <p className="text-xs uppercase tracking-wider font-semibold text-muted-foreground mb-1">{payload[0].payload.fullDate}</p>
+        <p className="text-xl font-bold text-foreground tabular-nums">
+          {formatCurrency(payload[0].value, currency)}
+        </p>
+      </div>
+    );
+  }
+  return null;
+};
+
 export function PerformanceChart({ valuations, totalModal }: PerformanceChartProps) {
+  const { currency } = useCurrency();
   const data = useMemo(() => {
     return valuations.map(v => ({
       date: v.recordedAt,
@@ -46,20 +62,6 @@ export function PerformanceChart({ valuations, totalModal }: PerformanceChartPro
   const maxVal = Math.max(...values, totalModal);
   const padding = (maxVal - minVal) * 0.1;
 
-  const CustomTooltip = ({ active, payload, label }: { active?: boolean, payload?: { payload: { fullDate: string }, value: number }[], label?: string }) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="bg-card border border-border/50 p-4 rounded-md shadow-xl">
-          <p className="text-xs uppercase tracking-wider font-semibold text-muted-foreground mb-1">{payload[0].payload.fullDate}</p>
-          <p className="text-xl font-bold text-foreground tabular-nums">
-            {formatIDR(payload[0].value)}
-          </p>
-        </div>
-      );
-    }
-    return null;
-  };
-
   return (
     <div className="bg-card border border-border/50 shadow-sm rounded-lg overflow-hidden pt-4 pb-2">
       <div className="h-[300px] w-full min-h-[300px]">
@@ -87,7 +89,7 @@ export function PerformanceChart({ valuations, totalModal }: PerformanceChartPro
               hide 
               domain={[minVal - padding, maxVal + padding]} 
             />
-            <Tooltip content={<CustomTooltip />} />
+            <Tooltip content={<CustomTooltipContent currency={currency} />} />
             <ReferenceLine 
               y={totalModal} 
               stroke="var(--muted-foreground)" 

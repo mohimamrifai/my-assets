@@ -1,4 +1,4 @@
-export type AssetType = "SAHAM" | "CRYPTO" | "EMAS";
+export type AssetType = "SAHAM" | "CRYPTO" | "EMAS" | "REKSA_DANA" | "P2P" | "LAINNYA";
 export type AssetMode = "INVESTING" | "TRADING";
 export type TransactionType = "BUY" | "SELL" | "DEPOSIT" | "WITHDRAWAL" | "UPDATE";
 
@@ -7,14 +7,16 @@ export interface Asset {
   name: string;
   type: AssetType;
   mode: AssetMode;
-  notes: string | null;
-  quantity: number | null;
-  buyPrice: number | null;
-  buyDate: Date | null;
-  platformName: string | null;
-  initialCapital: number | null;
-  createdAt: Date;
-  updatedAt: Date;
+  notes?: string | null;
+  isNominal: boolean;
+  quantity?: number | null;
+  buyPrice?: number | null;
+  buyDate?: Date | string | null;
+  platformName?: string | null;
+  initialCapital?: number | null;
+  status: string;
+  createdAt: Date | string;
+  updatedAt: Date | string;
 }
 
 export interface Valuation {
@@ -31,10 +33,13 @@ export interface Transaction {
   assetId: string;
   type: TransactionType;
   amount: number;
-  fundSource: string | null;
-  date: Date;
-  notes: string | null;
-  createdAt: Date;
+  quantity?: number | null;
+  price?: number | null;
+  realizedGain?: number | null;
+  fundSource?: string | null;
+  date: Date | string;
+  notes?: string | null;
+  createdAt: Date | string;
 }
 
 export interface AssetWithLatestValuation extends Asset {
@@ -54,6 +59,11 @@ export interface DashboardData {
     SAHAM: { value: number; percent: number };
     CRYPTO: { value: number; percent: number };
     EMAS: { value: number; percent: number };
+    REKSA_DANA: { value: number; percent: number };
+    P2P: { value: number; percent: number };
+    LAINNYA: { value: number; percent: number };
   };
   assets: (AssetWithLatestValuation & { currentValue: number; totalModal: number; gainLoss: { nominal: number; percent: number } })[];
+  allTransactions: (Transaction & { assetName: string })[];
+  allValuations: Valuation[];
 }

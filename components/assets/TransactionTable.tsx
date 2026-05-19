@@ -1,22 +1,30 @@
 "use client";
 
+import { useState } from "react";
 import { format } from "date-fns";
 import { id as localeId } from "date-fns/locale";
+import { useCurrency } from "@/components/providers/CurrencyProvider";
+import { formatCurrency } from "@/lib/formatters";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { CurrencyDisplay } from "@/components/shared/CurrencyDisplay";
-import { Transaction } from "@/types";
+import type { Transaction } from "@/types";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Separator } from "@/components/ui/separator";
 
 interface TransactionTableProps {
   transactions: Transaction[];
+  assetName?: string;
 }
 
-export function TransactionTable({ transactions }: TransactionTableProps) {
+export function TransactionTable({ transactions, assetName }: TransactionTableProps) {
+  const [selectedTx, setSelectedTx] = useState<Transaction | null>(null);
+  const { currency } = useCurrency();
+
   if (transactions.length === 0) {
     return (
-      <Card className="bg-card border-border shadow-sm rounded-lg overflow-hidden flex flex-col">
+      <Card className="bg-card border-border shadow-sm rounded-lg overflow-hidden flex flex-col h-full">
         <CardHeader className="py-4 px-5 border-b border-border/50">
           <CardTitle className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Riwayat Transaksi</CardTitle>
         </CardHeader>
@@ -28,55 +36,155 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
   }
 
   return (
-    <Card className="bg-card border-border shadow-sm rounded-lg overflow-hidden flex flex-col">
-      <CardHeader className="py-4 px-5 border-b border-border/50">
-        <CardTitle className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Riwayat Transaksi</CardTitle>
-      </CardHeader>
-      <div className="overflow-x-auto flex-1 max-h-[400px]">
-        <Table>
-          <TableHeader className="bg-muted/20 sticky top-0 z-10 backdrop-blur-md">
-            <TableRow className="border-border/50 hover:bg-transparent">
-              <TableHead className="font-medium text-xs uppercase tracking-wider h-10 px-5">Tanggal</TableHead>
-              <TableHead className="font-medium text-xs uppercase tracking-wider h-10">Tipe</TableHead>
-              <TableHead className="font-medium text-xs uppercase tracking-wider h-10 text-right">Nominal</TableHead>
-              <TableHead className="font-medium text-xs uppercase tracking-wider h-10">Sumber Dana</TableHead>
-              <TableHead className="font-medium text-xs uppercase tracking-wider h-10 px-5">Catatan</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {transactions.map((trx) => {
-              let badgeColor = "bg-gray-500/10 text-gray-500 border-gray-500/20";
-              
-              if (trx.type === "BUY") badgeColor = "bg-emerald-500/10 text-emerald-600 border-emerald-500/20";
-              else if (trx.type === "SELL") badgeColor = "bg-red-500/10 text-red-600 border-red-500/20";
-              else if (trx.type === "DEPOSIT") badgeColor = "bg-blue-500/10 text-blue-600 border-blue-500/20";
-              else if (trx.type === "WITHDRAWAL") badgeColor = "bg-orange-500/10 text-orange-600 border-orange-500/20";
+    <>
+      <Card className="bg-card border-border shadow-sm rounded-lg overflow-hidden flex flex-col h-full">
+        <CardHeader className="py-4 px-5 border-b border-border/50">
+          <CardTitle className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Riwayat Transaksi</CardTitle>
+        </CardHeader>
+        <div className="overflow-x-auto flex-1 max-h-[400px]">
+          <Table>
+            <TableHeader className="bg-muted/20 sticky top-0 z-10 backdrop-blur-md">
+              <TableRow className="border-border/50 hover:bg-transparent">
+                <TableHead className="font-medium text-xs uppercase tracking-wider h-10 px-5">Tanggal</TableHead>
+                <TableHead className="font-medium text-xs uppercase tracking-wider h-10">Tipe</TableHead>
+                <TableHead className="font-medium text-xs uppercase tracking-wider h-10 text-right">Nominal</TableHead>
+                <TableHead className="font-medium text-xs uppercase tracking-wider h-10">Sumber Dana</TableHead>
+                {assetName && assetName === "Global" && (
+                  <TableHead className="font-medium text-xs uppercase tracking-wider h-10">Aset</TableHead>
+                )}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {transactions.map((trx) => {
+                let badgeColor = "bg-gray-500/10 text-gray-500 border-gray-500/20";
+                
+                if (trx.type === "BUY") badgeColor = "bg-emerald-500/10 text-emerald-600 border-emerald-500/20";
+                else if (trx.type === "SELL") badgeColor = "bg-amber-500/10 text-amber-600 border-amber-500/20";
+                else if (trx.type === "DEPOSIT") badgeColor = "bg-blue-500/10 text-blue-600 border-blue-500/20";
+                else if (trx.type === "WITHDRAWAL") badgeColor = "bg-orange-500/10 text-orange-600 border-orange-500/20";
+                else if (trx.type === "UPDATE") badgeColor = "bg-purple-500/10 text-purple-600 border-purple-500/20";
 
-              return (
-                <TableRow key={trx.id} className="border-border/50 hover:bg-muted/30 transition-colors">
-                  <TableCell className="px-5 py-3 text-sm text-foreground font-medium">
-                    {format(new Date(trx.date), "dd MMM yyyy", { locale: localeId })}
+                // Hack for global table asset name
+              const relatedAsset = (trx as Transaction & { assetName?: string }).assetName;
+
+                return (
+                  <TableRow 
+                    key={trx.id} 
+                    className="border-border/50 hover:bg-muted/30 transition-colors cursor-pointer"
+                    onClick={() => setSelectedTx(trx)}
+                  >
+                    <TableCell className="px-5 py-3 text-sm text-foreground font-medium">
+                      {format(new Date(trx.date), "dd MMM yyyy", { locale: localeId })}
+                    </TableCell>
+                    <TableCell className="py-3">
+                      <Badge variant="outline" className={`text-[10px] font-semibold tracking-wide uppercase px-2 py-0.5 rounded-md ${badgeColor}`}>
+                        {trx.type}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right py-3 font-medium text-sm text-foreground">
+                    {formatCurrency(trx.amount, currency)}
                   </TableCell>
-                  <TableCell className="py-3">
-                    <Badge variant="outline" className={`text-[10px] font-semibold tracking-wide uppercase px-2 py-0.5 rounded-md ${badgeColor}`}>
-                      {trx.type}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right py-3 font-medium text-sm text-foreground">
-                    <CurrencyDisplay value={trx.amount} />
-                  </TableCell>
-                  <TableCell className="text-sm py-3 text-muted-foreground">
-                    {trx.fundSource || "-"}
-                  </TableCell>
-                  <TableCell className="px-5 py-3 text-sm text-muted-foreground truncate max-w-[150px]" title={trx.notes || ""}>
-                    {trx.notes || "-"}
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-      </div>
-    </Card>
+                    <TableCell className="text-sm py-3 text-muted-foreground">
+                      {trx.fundSource || "-"}
+                    </TableCell>
+                    {assetName && assetName === "Global" && (
+                      <TableCell className="text-sm py-3 font-medium">
+                        {relatedAsset || "-"}
+                      </TableCell>
+                    )}
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </div>
+      </Card>
+
+      <Dialog open={!!selectedTx} onOpenChange={(open) => !open && setSelectedTx(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Detail Transaksi</DialogTitle>
+            <DialogDescription>
+              Informasi lengkap mengenai transaksi yang dipilih.
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedTx && (
+            <div className="space-y-4 py-4">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">Tanggal & Waktu</span>
+                <span className="font-medium">{format(new Date(selectedTx.date), "dd MMMM yyyy, HH:mm", { locale: localeId })}</span>
+              </div>
+              <Separator />
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">Tipe Transaksi</span>
+                <Badge variant="outline" className="uppercase">{selectedTx.type}</Badge>
+              </div>
+              <Separator />
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">Nominal</span>
+                <span className="font-bold text-lg">{formatCurrency(selectedTx.amount, currency)}</span>
+              </div>
+              <Separator />
+              
+              {assetName && (
+                <>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">Aset Terkait</span>
+                    <span className="font-medium">{assetName}</span>
+                  </div>
+                  <Separator />
+                </>
+              )}
+              
+              {selectedTx.quantity != null && (
+                <>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">Kuantitas</span>
+                    <span className="font-medium">{selectedTx.quantity}</span>
+                  </div>
+                  <Separator />
+                </>
+              )}
+              
+              {selectedTx.price != null && (
+                <>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">Harga Satuan</span>
+                    <span className="font-medium">{formatCurrency(selectedTx.price, currency)}</span>
+                  </div>
+                  <Separator />
+                </>
+              )}
+
+              {selectedTx.realizedGain != null && (
+                <>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">Realized Gain/Loss</span>
+                    <span className={`font-bold ${selectedTx.realizedGain > 0 ? "text-emerald-500" : selectedTx.realizedGain < 0 ? "text-red-500" : ""}`}>
+                      {selectedTx.realizedGain > 0 ? "+" : ""}{formatCurrency(selectedTx.realizedGain, currency)}
+                    </span>
+                  </div>
+                  <Separator />
+                </>
+              )}
+
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">Sumber/Tujuan Dana</span>
+                <span className="font-medium">{selectedTx.fundSource || "-"}</span>
+              </div>
+              <Separator />
+              
+              <div className="flex flex-col gap-2">
+                <span className="text-sm text-muted-foreground">Catatan / Keterangan</span>
+                <p className="text-sm bg-muted/50 p-3 rounded-md min-h-[60px]">
+                  {selectedTx.notes || "Tidak ada catatan."}
+                </p>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

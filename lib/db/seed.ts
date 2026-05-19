@@ -63,7 +63,7 @@ async function seed() {
         }
       });
       console.log("Admin user created: admin@myassets.com / password123");
-    } catch (e) {
+    } catch {
       console.log("Admin user might already exist, proceeding...");
     }
 
@@ -147,7 +147,8 @@ async function seed() {
     }
     console.log("✅ Seeding completed! Database is now populated with rich chart data and transactions.");
   } catch (error) {
-    console.error("❌ Seeding failed:", error);
+    console.error("Seeding failed:");
+    console.error(error);
   }
   process.exit(0);
 }

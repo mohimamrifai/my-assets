@@ -7,34 +7,56 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Loader2, TrendingUp, Wallet, ShieldCheck, BarChart3 } from "lucide-react";
+import { Loader2, ShieldCheck, BarChart3 } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 import { Logo } from "@/components/shared/Logo";
 
 export default function LoginPage() {
+  const [isRegistering, setIsRegistering] = useState(false);
+  const [name, setName] = useState("");
+  const [currency, setCurrency] = useState("IDR");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      const { data, error } = await authClient.signIn.email({
-        email,
-        password,
-      });
-
-      if (error) {
-        toast.error(error.message || "Failed to sign in");
+      if (isRegistering) {
+        type SignUpEmail = (params: { email: string; password: string; name: string; currency: string }) => Promise<{ error?: { message: string } }>;
+        const { error } = await (authClient.signUp.email as unknown as SignUpEmail)({
+          email,
+          password,
+          name,
+          currency,
+        });
+        if (error) {
+          toast.error(error.message || "Failed to sign up");
+        } else {
+          toast.success("Account created successfully");
+          router.push("/");
+          router.refresh();
+        }
       } else {
-        toast.success("Signed in successfully");
-        router.push("/");
-        router.refresh();
+        const { error } = await authClient.signIn.email({
+          email,
+          password,
+        });
+
+        if (error) {
+          toast.error(error.message || "Failed to sign in");
+        } else {
+          toast.success("Signed in successfully");
+          router.push("/");
+          router.refresh();
+        }
       }
     } catch (err) {
+      console.error(err);
       toast.error("An unexpected error occurred");
     } finally {
       setLoading(false);
@@ -105,14 +127,45 @@ export default function LoginPage() {
 
         <div className="w-full max-w-[400px] space-y-8">
           <div className="space-y-2 text-center lg:text-left">
-            <h2 className="text-3xl font-semibold tracking-tight">Welcome back</h2>
+            <h2 className="text-3xl font-semibold tracking-tight">
+              {isRegistering ? "Create an account" : "Welcome back"}
+            </h2>
             <p className="text-muted-foreground">
-              Enter your credentials to access your portfolio
+              {isRegistering ? "Enter your details to get started" : "Enter your credentials to access your portfolio"}
             </p>
           </div>
 
-          <form onSubmit={handleLogin} className="space-y-6 mt-8">
+          <form onSubmit={handleAuth} className="space-y-6 mt-8">
             <div className="space-y-4">
+              {isRegistering && (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="name" className="text-sm font-medium">Full Name</Label>
+                    <Input
+                      id="name"
+                      type="text"
+                      placeholder="John Doe"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      required
+                      className="h-11 px-4 bg-background border-border hover:border-primary/50 focus:border-primary transition-colors"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="currency" className="text-sm font-medium">Base Currency</Label>
+                    <Select value={currency} onValueChange={setCurrency}>
+                      <SelectTrigger className="h-11 px-4 bg-background border-border hover:border-primary/50 focus:border-primary transition-colors">
+                        <SelectValue placeholder="Select currency" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="IDR">IDR - Indonesian Rupiah</SelectItem>
+                        <SelectItem value="USD">USD - US Dollar</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </>
+              )}
+              
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-sm font-medium">
                   Email address
@@ -135,9 +188,11 @@ export default function LoginPage() {
                   <Label htmlFor="password" className="text-sm font-medium">
                     Password
                   </Label>
-                  <a href="#" className="text-sm font-medium text-primary hover:text-primary/80 transition-colors">
-                    Forgot password?
-                  </a>
+                  {!isRegistering && (
+                    <a href="#" className="text-sm font-medium text-primary hover:text-primary/80 transition-colors">
+                      Forgot password?
+                    </a>
+                  )}
                 </div>
                 <div className="relative">
                   <Input
@@ -161,13 +216,23 @@ export default function LoginPage() {
               {loading ? (
                 <>
                   <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                  Authenticating...
+                  {isRegistering ? "Creating account..." : "Authenticating..."}
                 </>
               ) : (
-                "Sign in to Dashboard"
+                isRegistering ? "Create Account" : "Sign in to Dashboard"
               )}
             </Button>
           </form>
+
+          <div className="text-center mt-6">
+            <button 
+              type="button" 
+              onClick={() => setIsRegistering(!isRegistering)}
+              className="text-sm text-muted-foreground hover:text-primary transition-colors"
+            >
+              {isRegistering ? "Already have an account? Sign in" : "Don't have an account? Sign up"}
+            </button>
+          </div>
 
           <div className="relative my-8">
             <div className="absolute inset-0 flex items-center">

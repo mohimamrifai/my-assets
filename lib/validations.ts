@@ -2,10 +2,11 @@ import { z } from "zod";
 
 const baseAssetSchema = z.object({
   name: z.string().min(1, "Name is required").or(z.string().length(0).optional()),
-  type: z.enum(["SAHAM", "CRYPTO", "EMAS"]),
+  type: z.enum(["SAHAM", "CRYPTO", "EMAS", "REKSA_DANA", "P2P", "LAINNYA"]),
   mode: z.enum(["INVESTING", "TRADING"]),
   notes: z.string().optional(),
   
+  isNominal: z.boolean().default(false),
   quantity: z.number().min(0).optional(),
   buyPrice: z.number().min(0).optional(),
   buyDate: z.coerce.date().optional(),
@@ -39,5 +40,13 @@ export const updateAssetSchema = baseAssetSchema.partial().extend({
 export const createValuationSchema = z.object({
   value: z.number().positive("Value must be positive"),
   recordedAt: z.coerce.date(),
+  notes: z.string().optional(),
+});
+
+export const createTransactionSchema = z.object({
+  type: z.enum(["DEPOSIT", "WITHDRAWAL"]),
+  amount: z.number().positive("Jumlah harus lebih dari 0"),
+  date: z.coerce.date(),
+  fundSource: z.string().optional(),
   notes: z.string().optional(),
 });

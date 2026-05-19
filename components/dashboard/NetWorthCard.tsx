@@ -1,6 +1,9 @@
+"use client";
+
 import { Card, CardContent } from "@/components/ui/card";
+import { useCurrency } from "@/components/providers/CurrencyProvider";
+import { formatCurrency } from "@/lib/formatters";
 import { Wallet } from "lucide-react";
-import { CurrencyDisplay } from "@/components/shared/CurrencyDisplay";
 
 interface NetWorthCardProps {
   netWorth: number;
@@ -8,6 +11,8 @@ interface NetWorthCardProps {
 }
 
 export function NetWorthCard({ netWorth, totalModal }: NetWorthCardProps) {
+  const { currency } = useCurrency();
+
   return (
     <Card className="relative overflow-hidden border-border bg-gradient-to-br from-card to-card/50 shadow-sm transition-all hover:shadow-md rounded-xl px-2 py-0">
       {/* Decorative gradient accents */}
@@ -23,12 +28,12 @@ export function NetWorthCard({ netWorth, totalModal }: NetWorthCardProps) {
         </div>
         
         <div className="text-2xl font-bold tracking-tight text-foreground mt-1">
-          <CurrencyDisplay value={netWorth} />
+          {formatCurrency(netWorth, currency)}
         </div>
         
         <div className="flex items-center justify-between text-xs mt-2 pt-3 border-t border-border/50">
           <span className="text-muted-foreground">Total Modal</span>
-          <CurrencyDisplay value={totalModal} className="font-medium text-foreground" />
+          <span className="font-medium text-foreground">{formatCurrency(totalModal, currency)}</span>
         </div>
       </CardContent>
     </Card>

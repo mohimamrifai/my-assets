@@ -2,12 +2,11 @@ import { NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { valuations } from "@/lib/db/schema";
+import { valuations, transactions } from "@/lib/db/schema";
 import { calcTotalModal, calcGainLoss } from "@/lib/calculations";
 import { desc } from "drizzle-orm";
-import { DashboardData } from "@/types";
 
-export async function GET(request: Request) {
+export async function GET() {
   try {
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session) {
@@ -18,8 +17,10 @@ export async function GET(request: Request) {
       with: {
         valuations: {
           orderBy: [desc(valuations.recordedAt)],
-          limit: 1,
         },
+        transactions: {
+          orderBy: [desc(transactions.date)],
+        }
       },
     });
 
@@ -35,12 +36,18 @@ export async function GET(request: Request) {
       SAHAM: { value: 0, percent: 0 },
       CRYPTO: { value: 0, percent: 0 },
       EMAS: { value: 0, percent: 0 },
+      REKSA_DANA: { value: 0, percent: 0 },
+      P2P: { value: 0, percent: 0 },
+      LAINNYA: { value: 0, percent: 0 },
     };
+
+    const allTransactions: (typeof transactions.$inferSelect & { assetName: string })[] = [];
+    const allValuations: typeof valuations.$inferSelect[] = [];
 
     const enrichedAssets = allAssets.map((asset) => {
       const modal =
         asset.mode === "INVESTING"
-          ? calcTotalModal(asset.type, asset.quantity || 0, asset.buyPrice || 0)
+          ? calcTotalModal(asset.type, asset.quantity || 0, asset.buyPrice || 0, asset.isNominal, asset.initialCapital || 0)
           : asset.initialCapital || 0;
 
       const latestValuation = asset.valuations?.[0];
@@ -62,9 +69,16 @@ export async function GET(request: Request) {
       }
 
       // Aggregate by Sector
-      if (asset.type === "SAHAM") bySector.SAHAM.value += currentValue;
-      else if (asset.type === "CRYPTO") bySector.CRYPTO.value += currentValue;
-      else if (asset.type === "EMAS") bySector.EMAS.value += currentValue;
+      if (bySector[asset.type]) {
+        bySector[asset.type].value += currentValue;
+      }
+
+      if (asset.transactions) {
+        allTransactions.push(...asset.transactions.map(t => ({ ...t, assetName: asset.name })));
+      }
+      if (asset.valuations) {
+        allValuations.push(...asset.valuations);
+      }
 
       return {
         ...asset,
@@ -75,15 +89,19 @@ export async function GET(request: Request) {
       };
     });
 
+    // Sort transactions by date desc
+    allTransactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    allValuations.sort((a, b) => new Date(b.recordedAt).getTime() - new Date(a.recordedAt).getTime());
+
     // Calculate Gain/Loss for Modes
     byMode.investing.gainLoss = calcGainLoss(byMode.investing.netWorth, byMode.investing.totalModal);
     byMode.trading.gainLoss = calcGainLoss(byMode.trading.netWorth, byMode.trading.totalModal);
 
     // Calculate Percentages for Sectors
     if (netWorth > 0) {
-      bySector.SAHAM.percent = (bySector.SAHAM.value / netWorth) * 100;
-      bySector.CRYPTO.percent = (bySector.CRYPTO.value / netWorth) * 100;
-      bySector.EMAS.percent = (bySector.EMAS.value / netWorth) * 100;
+      Object.keys(bySector).forEach((key) => {
+        bySector[key as keyof typeof bySector].percent = (bySector[key as keyof typeof bySector].value / netWorth) * 100;
+      });
     }
 
     const globalGainLoss = calcGainLoss(netWorth, totalCapital);
@@ -96,6 +114,8 @@ export async function GET(request: Request) {
       byMode,
       bySector,
       assets: enrichedAssets,
+      allTransactions,
+      allValuations
     };
 
     return NextResponse.json({ success: true, data: dashboardData });

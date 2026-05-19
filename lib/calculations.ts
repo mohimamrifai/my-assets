@@ -1,6 +1,9 @@
-import { AssetType, AssetMode } from "@/types";
+import { AssetType } from "@/types";
 
-export function calcTotalModal(type: AssetType, quantity: number, buyPrice: number): number {
+export function calcTotalModal(type: AssetType, quantity: number, buyPrice: number, isNominal: boolean = false, initialCapital: number = 0): number {
+  if (isNominal) {
+    return initialCapital;
+  }
   if (type === "SAHAM") {
     return quantity * 100 * buyPrice;
   }

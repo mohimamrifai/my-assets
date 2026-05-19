@@ -25,6 +25,52 @@ const navItems = [
   },
 ];
 
+const NavContent = ({
+  pathname,
+  setOpen,
+  handleLogout
+}: {
+  pathname: string;
+  setOpen: (open: boolean) => void;
+  handleLogout: () => void;
+}) => (
+  <div className="flex flex-col h-full">
+    <div className="px-6 py-8">
+      <Logo size={40} />
+    </div>
+    <nav className="flex-1 px-4 space-y-2">
+      {navItems.map((item) => {
+        const isActive = pathname === item.href;
+        return (
+          <Link key={item.href} href={item.href} onClick={() => setOpen(false)}>
+            <span
+              className={cn(
+                "flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors",
+                isActive
+                  ? "bg-primary/10 text-primary"
+                  : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+              )}
+            >
+              <item.icon size={20} />
+              {item.title}
+            </span>
+          </Link>
+        );
+      })}
+    </nav>
+    <div className="p-4 mt-auto border-t border-border">
+      <Button 
+        variant="ghost" 
+        className="w-full justify-start text-muted-foreground hover:text-foreground" 
+        onClick={handleLogout}
+      >
+        <LogOut size={20} className="mr-2" />
+        Logout
+      </Button>
+    </div>
+  </div>
+);
+
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -34,44 +80,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     await authClient.signOut();
     router.push("/login");
   };
-
-  const NavContent = () => (
-    <div className="flex flex-col h-full">
-      <div className="px-6 py-8">
-        <Logo size={40} />
-      </div>
-      <nav className="flex-1 px-4 space-y-2">
-        {navItems.map((item) => {
-          const isActive = pathname === item.href;
-          return (
-            <Link key={item.href} href={item.href} onClick={() => setOpen(false)}>
-              <span
-                className={cn(
-                  "flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors",
-                  isActive
-                    ? "bg-primary/10 text-primary"
-                    : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
-                )}
-              >
-                <item.icon size={20} />
-                {item.title}
-              </span>
-            </Link>
-          );
-        })}
-      </nav>
-      <div className="p-4 mt-auto border-t border-border">
-        <Button 
-          variant="ghost" 
-          className="w-full justify-start text-muted-foreground hover:text-foreground" 
-          onClick={handleLogout}
-        >
-          <LogOut size={20} className="mr-2" />
-          Logout
-        </Button>
-      </div>
-    </div>
-  );
 
   return (
     <div className="min-h-screen bg-background flex flex-col md:flex-row">
@@ -86,14 +94,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </SheetTrigger>
           <SheetContent side="left" className="p-0 w-64 bg-card border-r-border">
             <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
-            <NavContent />
+            <NavContent pathname={pathname} setOpen={setOpen} handleLogout={handleLogout} />
           </SheetContent>
         </Sheet>
       </header>
 
       {/* Desktop Sidebar */}
       <aside className="hidden md:block w-64 border-r border-border bg-card/50 backdrop-blur-sm fixed inset-y-0 left-0 z-40">
-        <NavContent />
+        <NavContent pathname={pathname} setOpen={setOpen} handleLogout={handleLogout} />
       </aside>
 
       {/* Main Content */}

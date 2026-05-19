@@ -1,11 +1,31 @@
 import { relations } from "drizzle-orm";
 import { pgTable, text, real, timestamp, pgEnum, boolean, index } from "drizzle-orm/pg-core";
 
-export const assetTypeEnum = pgEnum("asset_type", ["SAHAM", "CRYPTO", "EMAS"]);
+export const assetTypeEnum = pgEnum("asset_type", ["SAHAM", "CRYPTO", "EMAS", "REKSA_DANA", "P2P", "LAINNYA"]);
 export const assetModeEnum = pgEnum("asset_mode", ["INVESTING", "TRADING"]);
 export const transactionTypeEnum = pgEnum("transaction_type", [
   "BUY", "SELL", "DEPOSIT", "WITHDRAWAL", "UPDATE",
 ]);
+
+export const cashTransactionTypeEnum = pgEnum("cash_transaction_type", [
+  "DEPOSIT", "WITHDRAWAL", "BUY_ASSET", "SELL_ASSET"
+]);
+
+export const investingCash = pgTable("investing_cash", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  balance: real("balance").notNull().default(0),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const investingCashTransactions = pgTable("investing_cash_transactions", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  type: cashTransactionTypeEnum("type").notNull(),
+  amount: real("amount").notNull(),
+  referenceId: text("reference_id"), // Can be assetId if related to BUY/SELL
+  date: timestamp("date").notNull(),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
 
 export const assets = pgTable("assets", {
   id:              text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
@@ -13,13 +33,17 @@ export const assets = pgTable("assets", {
   type:            assetTypeEnum("type").notNull(),
   mode:            assetModeEnum("mode").notNull(),
   notes:           text("notes"),
+  
+  isNominal:       boolean("is_nominal").default(false).notNull(), // TRUE if invested by flat nominal instead of quantity
 
   quantity:        real("quantity"),
   buyPrice:        real("buy_price"),
   buyDate:         timestamp("buy_date"),
 
   platformName:    text("platform_name"),
-  initialCapital:  real("initial_capital"),
+  initialCapital:  real("initial_capital"), // Also used for Nominal Investing to store the capital amount
+
+  status:          text("status").default("ACTIVE").notNull(), // ACTIVE, SOLD
 
   createdAt:       timestamp("created_at").defaultNow().notNull(),
   updatedAt:       timestamp("updated_at").defaultNow().notNull(),
@@ -39,6 +63,9 @@ export const transactions = pgTable("transactions", {
   assetId:     text("asset_id").notNull().references(() => assets.id, { onDelete: "cascade" }),
   type:        transactionTypeEnum("type").notNull(),
   amount:      real("amount").notNull(),
+  quantity:    real("quantity"), // New: how many units were transacted (for SELL)
+  price:       real("price"),    // New: price per unit at transaction
+  realizedGain: real("realized_gain"), // New: for SELL transactions
   fundSource:  text("fund_source"),
   date:        timestamp("date").notNull(),
   notes:       text("notes"),
@@ -71,6 +98,7 @@ export const user = pgTable("user", {
   email: text("email").notNull().unique(),
   emailVerified: boolean("email_verified").default(false).notNull(),
   image: text("image"),
+  currency: text("currency").default("IDR").notNull(), // Tambahan untuk preferensi currency
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()

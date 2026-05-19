@@ -1,4 +1,8 @@
+"use client";
+
 import { useState, useMemo } from "react";
+import { useCurrency } from "@/components/providers/CurrencyProvider";
+import { formatCurrency } from "@/lib/formatters";
 import Link from "next/link";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -23,6 +27,7 @@ interface AssetTableProps {
 }
 
 export function AssetTable({ assets }: AssetTableProps) {
+  const { currency } = useCurrency();
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
@@ -41,11 +46,6 @@ export function AssetTable({ assets }: AssetTableProps) {
     const startIndex = (currentPage - 1) * itemsPerPage;
     return filteredAssets.slice(startIndex, startIndex + itemsPerPage);
   }, [filteredAssets, currentPage]);
-
-  // Reset to page 1 when search query changes
-  useMemo(() => {
-    setCurrentPage(1);
-  }, [searchQuery]);
 
   if (assets.length === 0) {
     return (
@@ -76,7 +76,10 @@ export function AssetTable({ assets }: AssetTableProps) {
             placeholder="Cari aset..." 
             className="pl-9 h-9 text-sm bg-muted/50 border-border/50 focus-visible:ring-emerald-500/30"
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setCurrentPage(1);
+            }}
           />
         </div>
       </CardHeader>
@@ -94,7 +97,7 @@ export function AssetTable({ assets }: AssetTableProps) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {paginatedAssets.length > 0 ? paginatedAssets.map((asset) => (
+            {paginatedAssets.length > 0 ? paginatedAssets.map((asset: EnrichedAsset) => (
               <TableRow key={asset.id} className="border-border/50 hover:bg-muted/30 transition-colors group">
                 <TableCell className="px-4 py-3">
                   <div className="flex flex-col">
@@ -134,7 +137,7 @@ export function AssetTable({ assets }: AssetTableProps) {
                   <CurrencyDisplay value={asset.totalModal} />
                 </TableCell>
                 <TableCell className="text-right py-3 font-medium text-sm text-foreground px-4">
-                  <CurrencyDisplay value={asset.currentValue} />
+                  {formatCurrency(asset.currentValue, currency)}
                 </TableCell>
                 <TableCell className="text-right py-3 px-4">
                   <div className="flex justify-end">

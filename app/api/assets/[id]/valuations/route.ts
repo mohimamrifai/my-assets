@@ -66,6 +66,6 @@ export async function POST(
     return NextResponse.json({ success: true, data: newValuation });
   } catch (error) {
     console.error("Error adding valuation:", error);
-    return NextResponse.json({ success: false, error: "Failed to add valuation" }, { status: 400 });
+    return NextResponse.json({ success: false, error: error instanceof Error ? error.message : "Failed to add valuation" }, { status: 400 });
   }
 }

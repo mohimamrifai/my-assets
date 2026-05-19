@@ -3,7 +3,8 @@
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart2, Bitcoin, Gem } from "lucide-react";
-import { formatIDR, formatPercent } from "@/lib/formatters";
+import { useCurrency } from "@/components/providers/CurrencyProvider";
+import { formatCurrency, formatPercent } from "@/lib/formatters";
 
 interface SectorBreakdownProps {
   saham: { value: number; percent: number };
@@ -18,6 +19,7 @@ const COLORS = {
 };
 
 export function SectorBreakdown({ saham, crypto, emas }: SectorBreakdownProps) {
+  const { currency } = useCurrency();
   const data = [
     { name: "Saham", value: saham.value, percent: saham.percent, color: COLORS.SAHAM, icon: BarChart2 },
     { name: "Crypto", value: crypto.value, percent: crypto.percent, color: COLORS.CRYPTO, icon: Bitcoin },
@@ -61,12 +63,21 @@ export function SectorBreakdown({ saham, crypto, emas }: SectorBreakdownProps) {
                 ))}
               </Pie>
               <RechartsTooltip 
-                formatter={(value: string | number | readonly (string | number)[] | undefined) => {
-                  if (Array.isArray(value)) return formatIDR(Number(value[0] || 0));
-                  return formatIDR(Number(value || 0));
+                content={({ active, payload }) => {
+                  if (active && payload && payload.length) {
+                    const data = payload[0].payload;
+                    return (
+                      <div className="bg-[#1A1D2E] border border-[#2A2D3E] p-3 rounded-lg shadow-xl">
+                        <p className="text-sm font-medium text-muted-foreground mb-1">{data.name}</p>
+                        <p className="text-xl font-bold text-[#F1F5F9] tabular-nums">
+                          {formatCurrency(data.value, currency)}
+                        </p>
+                        <p className="text-sm font-medium text-muted-foreground mt-1">{formatPercent(data.percent)}</p>
+                      </div>
+                    );
+                  }
+                  return null;
                 }}
-                contentStyle={{ backgroundColor: '#1A1D2E', borderColor: '#2A2D3E', color: '#F1F5F9', borderRadius: '8px' }}
-                itemStyle={{ color: '#F1F5F9' }}
               />
             </PieChart>
           </ResponsiveContainer>
@@ -87,7 +98,7 @@ export function SectorBreakdown({ saham, crypto, emas }: SectorBreakdownProps) {
                   <span className="font-medium text-foreground">{item.name}</span>
                 </div>
                 <div className="flex flex-col items-end">
-                  <span className="font-medium tabular-nums">{formatIDR(item.value)}</span>
+                  <span className="font-medium tabular-nums">{formatCurrency(item.value, currency)}</span>
                   <span className="text-xs text-muted-foreground tabular-nums">{formatPercent(item.percent)}</span>
                 </div>
               </div>

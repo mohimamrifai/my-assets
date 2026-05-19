@@ -16,7 +16,7 @@ import { createValuationSchema } from "@/lib/validations";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+import { NominalInput } from "@/components/ui/nominal-input";
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
@@ -24,7 +24,8 @@ import { PageHeader } from "@/components/shared/PageHeader";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Asset, Valuation } from "@/types";
 
-import { formatIDR } from "@/lib/formatters";
+import { useCurrency } from "@/components/providers/CurrencyProvider";
+import { formatCurrency } from "@/lib/formatters";
 
 interface ExtendedAsset extends Asset {
   valuations: Valuation[];
@@ -40,16 +41,18 @@ export default function UpdateValuationPage({ params }: { params: Promise<{ id: 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<ValuationFormValues>({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: zodResolver(createValuationSchema) as any,
     defaultValues: {
-      value: 0,
       recordedAt: new Date(),
       notes: "",
     },
   });
 
   const { watch } = form;
-  const currentValueInput = watch("value") || 0;
+  const { currency } = useCurrency();
+  // eslint-disable-next-line react-hooks/incompatible-library
+  const currentValueInput = Number(watch("value")) || 0;
 
   useEffect(() => {
     const fetchAsset = async () => {
@@ -63,7 +66,7 @@ export default function UpdateValuationPage({ params }: { params: Promise<{ id: 
           toast.error("Gagal memuat detail aset");
           router.push("/dashboard");
         }
-      } catch (error) {
+      } catch {
         toast.error("Terjadi kesalahan jaringan");
         router.push("/dashboard");
       } finally {
@@ -91,7 +94,7 @@ export default function UpdateValuationPage({ params }: { params: Promise<{ id: 
       } else {
         toast.error(result.error || "Gagal memperbarui nilai aset");
       }
-    } catch (error) {
+    } catch {
       toast.error("Terjadi kesalahan sistem");
     } finally {
       setIsSubmitting(false);
@@ -120,23 +123,29 @@ export default function UpdateValuationPage({ params }: { params: Promise<{ id: 
   let previewText = "";
 
   if (asset.mode === "INVESTING") {
-    const qty = asset.quantity || 0;
-    if (asset.type === "SAHAM") {
-      inputLabel = "Harga per Lembar Saat Ini (Rp)";
-      calculatedTotal = qty * 100 * currentValueInput;
-      previewText = `Nilai Total = ${qty} lot × 100 × ${formatIDR(currentValueInput)} = ${formatIDR(calculatedTotal)}`;
-    } else if (asset.type === "CRYPTO") {
-      inputLabel = "Harga per Unit Saat Ini (Rp)";
-      calculatedTotal = qty * currentValueInput;
-      previewText = `Nilai Total = ${qty} unit × ${formatIDR(currentValueInput)} = ${formatIDR(calculatedTotal)}`;
-    } else if (asset.type === "EMAS") {
-      inputLabel = "Harga per Gram Saat Ini (Rp)";
-      calculatedTotal = qty * currentValueInput;
-      previewText = `Nilai Total = ${qty} gram × ${formatIDR(currentValueInput)} = ${formatIDR(calculatedTotal)}`;
+    if (asset.isNominal) {
+      inputLabel = `Nilai Total Saat Ini (${currency === "USD" ? "$" : "Rp"})`;
+      calculatedTotal = currentValueInput;
+      previewText = `Nilai Total = ${formatCurrency(calculatedTotal, currency)}`;
+    } else {
+      const qty = asset.quantity || 0;
+      if (asset.type === "SAHAM") {
+        inputLabel = `Harga per Lembar Saat Ini (${currency === "USD" ? "$" : "Rp"})`;
+        calculatedTotal = qty * 100 * currentValueInput;
+        previewText = `Nilai Total = ${qty} lot × 100 × ${formatCurrency(currentValueInput, currency)} = ${formatCurrency(calculatedTotal, currency)}`;
+      } else if (asset.type === "CRYPTO") {
+        inputLabel = `Harga per Unit Saat Ini (${currency === "USD" ? "$" : "Rp"})`;
+        calculatedTotal = qty * currentValueInput;
+        previewText = `Nilai Total = ${qty} unit × ${formatCurrency(currentValueInput, currency)} = ${formatCurrency(calculatedTotal, currency)}`;
+      } else if (asset.type === "EMAS") {
+        inputLabel = `Harga per Gram Saat Ini (${currency === "USD" ? "$" : "Rp"})`;
+        calculatedTotal = qty * currentValueInput;
+        previewText = `Nilai Total = ${qty} gram × ${formatCurrency(currentValueInput, currency)} = ${formatCurrency(calculatedTotal, currency)}`;
+      }
     }
   } else {
     // TRADING
-    inputLabel = `Saldo Akun Saat Ini ${asset.platformName ? `di ${asset.platformName}` : ''} (Rp)`;
+    inputLabel = `Saldo Akun Saat Ini ${asset.platformName ? `di ${asset.platformName}` : ''} (${currency === "USD" ? "$" : "Rp"})`;
     // calculatedTotal is just the input value
   }
 
@@ -162,7 +171,7 @@ export default function UpdateValuationPage({ params }: { params: Promise<{ id: 
           </div>
           <div className="text-right">
             <div className="font-semibold text-foreground">
-              {formatIDR(latestValuation.value)}
+              {formatCurrency(latestValuation.value, currency)}
             </div>
             <div className="text-xs text-muted-foreground">
               pada {format(new Date(latestValuation.recordedAt), "dd MMM yyyy", { locale: localeId })}
@@ -182,11 +191,9 @@ export default function UpdateValuationPage({ params }: { params: Promise<{ id: 
                   <FormItem>
                     <FormLabel>{inputLabel}</FormLabel>
                     <FormControl>
-                      <Input 
-                        type="number" 
+                      <NominalInput 
                         placeholder="0" 
                         {...field} 
-                        onChange={e => field.onChange(parseFloat(e.target.value) || 0)} 
                         className="text-lg py-6"
                       />
                     </FormControl>
@@ -202,7 +209,7 @@ export default function UpdateValuationPage({ params }: { params: Promise<{ id: 
                   <div className="mt-2 pt-2 border-t border-primary/10 flex justify-between items-center">
                     <span className="font-semibold">Nilai Portofolio Baru:</span>
                     <span className="text-lg font-bold text-primary">
-                      {formatIDR(calculatedTotal)}
+                      {formatCurrency(calculatedTotal, currency)}
                     </span>
                   </div>
                 </div>

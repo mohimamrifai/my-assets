@@ -11,14 +11,17 @@ import { OverviewChart } from "@/components/dashboard/OverviewChart";
 import { DashboardData } from "@/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, RefreshCw } from "lucide-react";
+import { PlusCircle, RefreshCw, Wallet } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
+import { HistoryFilter, TimeFilter, filterByTime } from "@/components/shared/HistoryFilter";
+import { TransactionTable } from "@/components/assets/TransactionTable";
 
 export default function DashboardPage() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<FilterMode>("SEMUA");
+  const [timeFilter, setTimeFilter] = useState<TimeFilter>("ALL");
 
   const fetchDashboardData = async () => {
     try {
@@ -39,7 +42,37 @@ export default function DashboardPage() {
   };
 
   useEffect(() => {
-    fetchDashboardData();
+    let mounted = true;
+
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        const res = await fetch("/api/dashboard");
+        const json = await res.json();
+        if (mounted) {
+          if (json.success) {
+            setData(json.data);
+          } else {
+            toast.error("Gagal memuat data dashboard");
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching dashboard:", error);
+        if (mounted) {
+          toast.error("Terjadi kesalahan jaringan");
+        }
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadData();
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   if (loading || !data) {
@@ -82,6 +115,16 @@ export default function DashboardPage() {
     return asset.mode === filter;
   });
 
+  const filteredTransactions = filterByTime(
+    data.allTransactions || [], 
+    timeFilter, 
+    (t) => t.date
+  ).filter(t => {
+    if (filter === "SEMUA") return true;
+    const relatedAsset = data.assets.find(a => a.id === t.assetId);
+    return relatedAsset?.mode === filter;
+  });
+
   return (
     <div className="space-y-6 pb-12">
       <PageHeader title="Dashboard" subtitle="Ringkasan portofolio aset Anda">
@@ -92,6 +135,12 @@ export default function DashboardPage() {
           <Link href="/assets/new">
             <PlusCircle size={18} className="mr-2" />
             Tambah Aset
+          </Link>
+        </Button>
+        <Button asChild variant="outline" className="bg-primary/5 text-primary border-primary/20 hover:bg-primary/10">
+          <Link href="/investing-cash">
+            <Wallet size={18} className="mr-2" />
+            Kas Investing
           </Link>
         </Button>
       </PageHeader>
@@ -119,6 +168,16 @@ export default function DashboardPage() {
           <FilterTabs value={filter} onChange={setFilter} />
         </div>
         <AssetTable assets={displayAssets} />
+      </div>
+
+      <div className="space-y-4 pt-4 border-t border-border/50">
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-semibold tracking-tight">Riwayat Transaksi Global</h2>
+          <HistoryFilter value={timeFilter} onChange={setTimeFilter} />
+        </div>
+        <div className="h-[400px]">
+          <TransactionTable transactions={filteredTransactions} assetName="Global" />
+        </div>
       </div>
     </div>
   );

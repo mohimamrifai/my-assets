@@ -1,4 +1,7 @@
-import { formatIDR } from "@/lib/formatters";
+"use client";
+
+import { useCurrency } from "@/components/providers/CurrencyProvider";
+import { formatCurrency } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
 
 interface CurrencyDisplayProps {
@@ -7,9 +10,10 @@ interface CurrencyDisplayProps {
 }
 
 export function CurrencyDisplay({ value, className }: CurrencyDisplayProps) {
+  const { currency } = useCurrency();
   return (
     <span className={cn("tabular-nums", className)}>
-      {formatIDR(value)}
+      {formatCurrency(value, currency)}
     </span>
   );
 }

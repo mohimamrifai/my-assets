@@ -4,16 +4,19 @@ import { useState, useEffect, use } from "react";
 import { format } from "date-fns";
 import { id as localeId } from "date-fns/locale";
 import { toast } from "sonner";
+import { useCurrency } from "@/components/providers/CurrencyProvider";
 
+import { formatCurrency } from "@/lib/formatters";
 import { AssetDetailHeader } from "@/components/assets/AssetDetailHeader";
 import { PerformanceChart } from "@/components/assets/PerformanceChart";
 import { TransactionTable } from "@/components/assets/TransactionTable";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CurrencyDisplay } from "@/components/shared/CurrencyDisplay";
 import { GainLossBadge } from "@/components/shared/GainLossBadge";
 import { calcTotalModal, calcGainLoss } from "@/lib/calculations";
+import { HistoryFilter, TimeFilter, filterByTime } from "@/components/shared/HistoryFilter";
 import { Asset, Valuation, Transaction } from "@/types";
 
 interface ExtendedAsset extends Asset {
@@ -25,6 +28,8 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
   const resolvedParams = use(params);
   const [asset, setAsset] = useState<ExtendedAsset | null>(null);
   const [loading, setLoading] = useState(true);
+  const [timeFilter, setTimeFilter] = useState<TimeFilter>("ALL");
+  const { currency } = useCurrency();
 
   useEffect(() => {
     const fetchAsset = async () => {
@@ -36,7 +41,7 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
         } else {
           toast.error("Gagal memuat detail aset");
         }
-      } catch (error) {
+      } catch {
         toast.error("Terjadi kesalahan jaringan");
       } finally {
         setLoading(false);
@@ -65,7 +70,7 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
   }
 
   const totalModal = asset.mode === "INVESTING" 
-    ? calcTotalModal(asset.type, asset.quantity || 0, asset.buyPrice || 0)
+    ? calcTotalModal(asset.type, asset.quantity || 0, asset.buyPrice || 0, asset.isNominal, asset.initialCapital || 0)
     : asset.initialCapital || 0;
 
   const latestValuation = asset.valuations.length > 0 
@@ -80,6 +85,18 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
     ...asset,
     latestValuation
   };
+
+  const filteredValuations = filterByTime(
+    asset.valuations, 
+    timeFilter, 
+    (v) => v.recordedAt
+  );
+
+  const filteredTransactions = filterByTime(
+    asset.transactions, 
+    timeFilter, 
+    (t) => t.date
+  );
 
   return (
     <div className="space-y-12 pb-16">
@@ -109,12 +126,12 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
           <div className="flex flex-wrap gap-6 text-left md:text-right pt-4 border-t md:border-t-0 border-emerald-200/50 w-full md:w-auto">
             <div>
               <p className="text-emerald-700/60 font-semibold uppercase tracking-wider text-[10px] mb-1">Total Modal</p>
-              <p className="text-lg font-bold text-emerald-900"><CurrencyDisplay value={totalModal} /></p>
+              <p className="text-lg font-bold text-emerald-900">{formatCurrency(totalModal, currency)}</p>
             </div>
-            {asset.mode === "INVESTING" && (
+            {asset.mode === "INVESTING" && !asset.isNominal && (
               <div>
                 <p className="text-emerald-700/60 font-semibold uppercase tracking-wider text-[10px] mb-1">Harga Beli</p>
-                <p className="text-lg font-bold text-emerald-900"><CurrencyDisplay value={asset.buyPrice || 0} /></p>
+                <p className="text-lg font-bold text-emerald-900">{formatCurrency(asset.buyPrice || 0, currency)}</p>
               </div>
             )}
           </div>
@@ -125,14 +142,21 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 bg-card rounded-lg border border-border/50 p-3 md:p-4 shadow-sm">
         {asset.mode === "INVESTING" ? (
           <>
-            <div className="px-3 py-2 bg-muted/30 rounded-md">
-              <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-1">Kuantitas</p>
-              <p className="text-base font-bold text-foreground">
-                {asset.quantity} <span className="text-[10px] font-medium text-muted-foreground ml-1">
-                  {asset.type === "SAHAM" ? "Lot" : asset.type === "EMAS" ? "Gram" : "Unit"}
-                </span>
-              </p>
-            </div>
+            {asset.isNominal ? (
+              <div className="px-3 py-2 bg-muted/30 rounded-md">
+                <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-1">Pencatatan</p>
+                <p className="text-base font-bold text-foreground">Nominal / Kas</p>
+              </div>
+            ) : (
+              <div className="px-3 py-2 bg-muted/30 rounded-md">
+                <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-1">Kuantitas</p>
+                <p className="text-base font-bold text-foreground">
+                  {asset.quantity} <span className="text-[10px] font-medium text-muted-foreground ml-1">
+                    {asset.type === "SAHAM" ? "Lot" : asset.type === "EMAS" ? "Gram" : "Unit"}
+                  </span>
+                </p>
+              </div>
+            )}
             <div className="px-3 py-2 bg-muted/30 rounded-md">
               <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-1">Tipe Aset</p>
               <p className="text-base font-bold text-foreground capitalize">{asset.type}</p>
@@ -164,8 +188,11 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
 
       {/* Edge-to-Edge Chart Section (No Card Border) */}
       <div className="py-4">
-        <h3 className="text-base font-bold text-foreground mb-4 pl-2 border-l-4 border-emerald-500">Pergerakan Valuasi</h3>
-        <PerformanceChart valuations={asset.valuations} totalModal={totalModal} />
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-base font-bold text-foreground pl-2 border-l-4 border-emerald-500">Pergerakan Valuasi</h3>
+          <HistoryFilter value={timeFilter} onChange={setTimeFilter} />
+        </div>
+        <PerformanceChart valuations={filteredValuations} totalModal={totalModal} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -184,14 +211,14 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {asset.valuations.length === 0 ? (
+                {filteredValuations.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={3} className="text-center py-12 text-muted-foreground">
-                      Belum ada histori valuasi
+                      Belum ada histori valuasi pada periode ini
                     </TableCell>
                   </TableRow>
                 ) : (
-                  [...asset.valuations].reverse().map((val) => {
+                  [...filteredValuations].reverse().map((val) => {
                     const valGL = calcGainLoss(val.value, totalModal);
                     return (
                       <TableRow key={val.id} className="border-border/50 hover:bg-muted/30 transition-colors">
@@ -199,8 +226,8 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
                           {format(new Date(val.recordedAt), "dd MMM yyyy", { locale: localeId })}
                         </TableCell>
                         <TableCell className="text-right py-3 font-medium text-sm text-foreground">
-                          <CurrencyDisplay value={val.value} />
-                        </TableCell>
+                            <CurrencyDisplay value={val.value} />
+                          </TableCell>
                         <TableCell className="text-right py-3 px-5">
                           <div className="flex justify-end">
                             <GainLossBadge nominal={valGL.nominal} percent={valGL.percent} className="px-2 py-0.5 text-xs rounded-md" />
@@ -216,7 +243,7 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
         </Card>
 
         {/* Transaction History */}
-        <TransactionTable transactions={asset.transactions} />
+        <TransactionTable transactions={filteredTransactions} />
       </div>
     </div>
   );

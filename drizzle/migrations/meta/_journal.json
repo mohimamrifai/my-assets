@@ -8,6 +8,20 @@
       "when": 1778689962373,
       "tag": "0000_nosy_ronan",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1779174578766,
+      "tag": "0001_opposite_joseph",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1779175549815,
+      "tag": "0002_misty_overlord",
+      "breakpoints": true
     }
   ]
 }
