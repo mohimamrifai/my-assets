@@ -1,9 +1,11 @@
 "use client";
 
-import { useState, useEffect, use } from "react";
+import { useState, useEffect, use, useCallback } from "react";
 import { format } from "date-fns";
+import { Loader2, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { id as localeId } from "date-fns/locale";
 import { toast } from "sonner";
+import Link from "next/link";
 import { useCurrency } from "@/components/providers/CurrencyProvider";
 
 import { formatCurrency } from "@/lib/formatters";
@@ -13,6 +15,9 @@ import { TransactionTable } from "@/components/assets/TransactionTable";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { CurrencyDisplay } from "@/components/shared/CurrencyDisplay";
 import { GainLossBadge } from "@/components/shared/GainLossBadge";
 import { calcTotalModal, calcGainLoss } from "@/lib/calculations";
@@ -29,27 +34,70 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
   const [asset, setAsset] = useState<ExtendedAsset | null>(null);
   const [loading, setLoading] = useState(true);
   const [timeFilter, setTimeFilter] = useState<TimeFilter>("ALL");
+  const [valToDelete, setValToDelete] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const { currency } = useCurrency();
 
+  const fetchAsset = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/assets/${resolvedParams.id}`);
+      const json = await res.json();
+      if (json.success) {
+        setAsset(json.data);
+      } else {
+        toast.error("Gagal memuat detail aset");
+      }
+    } catch {
+      toast.error("Terjadi kesalahan jaringan");
+    } finally {
+      setLoading(false);
+    }
+  }, [resolvedParams.id]);
+
   useEffect(() => {
-    const fetchAsset = async () => {
+    let mounted = true;
+    const load = async () => {
       try {
         const res = await fetch(`/api/assets/${resolvedParams.id}`);
         const json = await res.json();
-        if (json.success) {
-          setAsset(json.data);
-        } else {
-          toast.error("Gagal memuat detail aset");
+        if (mounted) {
+          if (json.success) {
+            setAsset(json.data);
+          } else {
+            toast.error("Gagal memuat detail aset");
+          }
         }
       } catch {
-        toast.error("Terjadi kesalahan jaringan");
+        if (mounted) toast.error("Terjadi kesalahan jaringan");
       } finally {
-        setLoading(false);
+        if (mounted) setLoading(false);
       }
     };
-
-    fetchAsset();
+    load();
+    return () => { mounted = false; };
   }, [resolvedParams.id]);
+
+  const handleDeleteValuation = async () => {
+    if (!valToDelete) return;
+    try {
+      setIsDeleting(true);
+      const res = await fetch(`/api/assets/${resolvedParams.id}/valuations/${valToDelete}`, {
+        method: "DELETE",
+      });
+      const json = await res.json();
+      if (json.success) {
+        toast.success("Histori valuasi berhasil dihapus");
+        fetchAsset();
+      } else {
+        toast.error(json.error || "Gagal menghapus valuasi");
+      }
+    } catch {
+      toast.error("Terjadi kesalahan jaringan");
+    } finally {
+      setIsDeleting(false);
+      setValToDelete(null);
+    }
+  };
 
   if (loading || !asset) {
     return (
@@ -207,19 +255,23 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
                 <TableRow className="border-border/50 hover:bg-transparent">
                   <TableHead className="font-medium text-xs uppercase tracking-wider h-10 px-5">Tanggal</TableHead>
                   <TableHead className="font-medium text-xs uppercase tracking-wider h-10 text-right">Nilai</TableHead>
-                  <TableHead className="font-medium text-xs uppercase tracking-wider h-10 text-right px-5">G/L vs Modal</TableHead>
+                  <TableHead className="font-medium text-xs uppercase tracking-wider h-10 text-right px-5">Perubahan</TableHead>
+                  <TableHead className="font-medium text-xs uppercase tracking-wider h-10 w-10"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredValuations.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={3} className="text-center py-12 text-muted-foreground">
+                    <TableCell colSpan={4} className="text-center py-12 text-muted-foreground">
                       Belum ada histori valuasi pada periode ini
                     </TableCell>
                   </TableRow>
                 ) : (
-                  [...filteredValuations].reverse().map((val) => {
-                    const valGL = calcGainLoss(val.value, totalModal);
+                  [...filteredValuations].reverse().map((val, index, arr) => {
+                    const prevVal = index < arr.length - 1 ? arr[index + 1] : null;
+                    const changeNominal = prevVal ? val.value - prevVal.value : 0;
+                    const changePercent = prevVal && prevVal.value !== 0 ? (changeNominal / prevVal.value) * 100 : 0;
+                    
                     return (
                       <TableRow key={val.id} className="border-border/50 hover:bg-muted/30 transition-colors">
                         <TableCell className="px-5 py-3 text-sm text-foreground font-medium">
@@ -230,8 +282,35 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
                           </TableCell>
                         <TableCell className="text-right py-3 px-5">
                           <div className="flex justify-end">
-                            <GainLossBadge nominal={valGL.nominal} percent={valGL.percent} className="px-2 py-0.5 text-xs rounded-md" />
+                            {prevVal ? (
+                              <GainLossBadge nominal={changeNominal} percent={changePercent} className="px-2 py-0.5 text-xs rounded-md" />
+                            ) : (
+                              <span className="text-muted-foreground text-xs">-</span>
+                            )}
                           </div>
+                        </TableCell>
+                          <TableCell className="py-3 px-2 text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem asChild>
+                                {/* We will use a query param or separate page to edit, but for now we can just push to update page maybe? */}
+                                {/* The user asked for "opsi edit", maybe we need a dedicated edit page. Let's link to /assets/[id]/valuations/[valId]/edit */}
+                                <Link href={`/assets/${asset.id}/valuations/${val.id}/edit`} className="cursor-pointer flex items-center">
+                                  <Pencil className="mr-2 h-4 w-4" />
+                                  Edit
+                                </Link>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => setValToDelete(val.id)} className="text-destructive focus:text-destructive cursor-pointer">
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </TableCell>
                       </TableRow>
                     );
@@ -243,8 +322,33 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
         </Card>
 
         {/* Transaction History */}
-        <TransactionTable transactions={filteredTransactions} />
+        <TransactionTable transactions={filteredTransactions} onTransactionDeleted={fetchAsset} />
       </div>
+
+      <AlertDialog open={!!valToDelete} onOpenChange={(open) => !open && setValToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Hapus Histori Valuasi?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tindakan ini tidak dapat dibatalkan. Menghapus histori valuasi dapat memengaruhi perhitungan performa portofolio Anda.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Batal</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={(e) => {
+                e.preventDefault();
+                handleDeleteValuation();
+              }}
+              disabled={isDeleting}
+              className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+            >
+              {isDeleting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Trash2 className="h-4 w-4 mr-2" />}
+              Hapus
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

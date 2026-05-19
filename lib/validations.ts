@@ -84,3 +84,11 @@ export const createTransactionSchema = z.object({
   fundSource: z.string().optional(),
   notes: z.string().optional(),
 });
+
+export const editTransactionSchema = z.object({
+  type: z.enum(["BUY", "SELL", "DEPOSIT", "WITHDRAWAL", "UPDATE"]),
+  amount: z.number().min(0, "Jumlah tidak boleh negatif"),
+  date: z.coerce.date(),
+  fundSource: z.string().optional(),
+  notes: z.string().optional(),
+});

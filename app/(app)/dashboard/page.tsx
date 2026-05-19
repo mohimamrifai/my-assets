@@ -170,7 +170,7 @@ export default function DashboardPage() {
           <HistoryFilter value={timeFilter} onChange={setTimeFilter} />
         </div>
         <div className="h-[400px]">
-          <TransactionTable transactions={filteredTransactions} assetName="Global" />
+          <TransactionTable transactions={filteredTransactions} assetName="Global" onTransactionDeleted={fetchDashboardData} />
         </div>
       </div>
     </div>

@@ -10,17 +10,54 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import type { Transaction } from "@/types";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
+import { Loader2, Pencil, Trash2 } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 interface TransactionTableProps {
   transactions: Transaction[];
   assetName?: string;
+  onTransactionDeleted?: () => void;
 }
 
-export function TransactionTable({ transactions, assetName }: TransactionTableProps) {
+export function TransactionTable({ transactions, assetName, onTransactionDeleted }: TransactionTableProps) {
   const [selectedTx, setSelectedTx] = useState<Transaction | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const { currency } = useCurrency();
+  const router = useRouter();
+
+  const handleDelete = async () => {
+    if (!selectedTx) return;
+    try {
+      setIsDeleting(true);
+      const res = await fetch(`/api/assets/${selectedTx.assetId}/transactions/${selectedTx.id}`, {
+        method: "DELETE",
+      });
+      const json = await res.json();
+      if (json.success) {
+        toast.success("Transaksi berhasil dihapus");
+        setShowDeleteConfirm(false);
+        setSelectedTx(null);
+        if (onTransactionDeleted) {
+          onTransactionDeleted();
+        } else {
+          router.refresh();
+        }
+      } else {
+        toast.error(json.error || "Gagal menghapus transaksi");
+      }
+    } catch {
+      toast.error("Terjadi kesalahan jaringan");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   if (transactions.length === 0) {
     return (
@@ -183,8 +220,52 @@ export function TransactionTable({ transactions, assetName }: TransactionTablePr
               </div>
             </div>
           )}
+          <DialogFooter className="sm:justify-between flex-row justify-between pt-2">
+            <Button 
+              type="button" 
+              variant="destructive" 
+              size="sm" 
+              onClick={() => setShowDeleteConfirm(true)}
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Hapus
+            </Button>
+            {selectedTx && (
+              <Button type="button" variant="outline" size="sm" asChild>
+                <Link href={`/assets/${selectedTx.assetId}/transactions/${selectedTx.id}/edit`}>
+                  <Pencil className="h-4 w-4 mr-2" />
+                  Edit
+                </Link>
+              </Button>
+            )}
+          </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Hapus Transaksi?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tindakan ini tidak dapat dibatalkan. Menghapus transaksi ini juga akan memengaruhi total modal/kuantitas aset terkait.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Batal</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={(e) => {
+                e.preventDefault();
+                handleDelete();
+              }}
+              disabled={isDeleting}
+              className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+            >
+              {isDeleting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Trash2 className="h-4 w-4 mr-2" />}
+              Hapus Transaksi
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
