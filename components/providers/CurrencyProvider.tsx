@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext } from "react";
 import { authClient } from "@/lib/auth-client";
 
 type CurrencyContextType = {
@@ -11,28 +11,14 @@ type CurrencyContextType = {
 const CurrencyContext = createContext<CurrencyContextType | undefined>(undefined);
 
 export function CurrencyProvider({ children }: { children: React.ReactNode }) {
-  const [currency, setCurrency] = useState<"IDR" | "USD">("IDR");
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchUserCurrency = async () => {
-      try {
-        const { data } = await authClient.getSession();
-        if (data?.user && "currency" in data.user) {
-          setCurrency((data.user as { currency: string }).currency as "IDR" | "USD");
-        }
-      } catch (error) {
-        console.error("Failed to fetch user session for currency", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchUserCurrency();
-  }, []);
+  const { data, isPending } = authClient.useSession();
+  
+  const currency = (data?.user && "currency" in data.user)
+    ? (data.user as { currency: string }).currency as "IDR" | "USD"
+    : "IDR";
 
   return (
-    <CurrencyContext.Provider value={{ currency, isLoading }}>
+    <CurrencyContext.Provider value={{ currency, isLoading: isPending }}>
       {children}
     </CurrencyContext.Provider>
   );
