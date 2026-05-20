@@ -15,8 +15,16 @@ const editTransactionSchema = z.object({
   quantity: z.number().optional(),
 });
 
+function getAutoValuationNote(type: "BUY" | "SELL" | "DEPOSIT" | "WITHDRAWAL" | "UPDATE", notes?: string) {
+  if (type === "UPDATE") {
+    return notes || "Value update";
+  }
+
+  return notes || `Auto-update from ${type}`;
+}
+
 export async function GET(
-  request: Request,
+  _request: Request,
   { params }: { params: Promise<{ id: string; trxId: string }> }
 ) {
   try {
@@ -119,6 +127,8 @@ export async function PUT(
       } else if (oldTransaction.type === "SELL") {
         newAssetQuantity -= qtyDiff;
         valuationDiff = -amountDiff;
+      } else if (oldTransaction.type === "UPDATE") {
+        valuationDiff = 0;
       }
 
       // Update asset
@@ -144,16 +154,20 @@ export async function PUT(
         })
         .where(and(eq(transactions.id, trxId), eq(transactions.assetId, id)));
 
+      const assetValuations = await tx
+        .select()
+        .from(valuations)
+        .where(eq(valuations.assetId, id));
+
+      const linkedValuation = assetValuations.find(
+        (valuation) => new Date(valuation.recordedAt).getTime() === new Date(oldTransaction.date).getTime(),
+      );
+
       // Recalculate subsequent valuations if there is a valuationDiff
       if (valuationDiff !== 0) {
-        // Find all valuations after or at the old transaction date
-        const subsequentValuations = await db.query.valuations.findMany({
-          where: eq(valuations.assetId, id)
-        });
-
         const oldTxTime = new Date(oldTransaction.date).getTime();
         
-        for (const val of subsequentValuations) {
+        for (const val of assetValuations) {
           if (new Date(val.recordedAt).getTime() >= oldTxTime) {
             await tx
               .update(valuations)
@@ -161,6 +175,38 @@ export async function PUT(
               .where(eq(valuations.id, val.id));
           }
         }
+      }
+
+      if (oldTransaction.type === "UPDATE") {
+        if (linkedValuation) {
+          await tx
+            .update(valuations)
+            .set({
+              value: validatedData.amount,
+              recordedAt: validatedData.date,
+              notes: validatedData.notes,
+            })
+            .where(eq(valuations.id, linkedValuation.id));
+        } else {
+          await tx.insert(valuations).values({
+            assetId: id,
+            value: validatedData.amount,
+            recordedAt: validatedData.date,
+            notes: validatedData.notes,
+          });
+        }
+      } else if (linkedValuation) {
+        const updatedLinkedValue =
+          valuationDiff !== 0 ? Math.max(0, linkedValuation.value + valuationDiff) : linkedValuation.value;
+
+        await tx
+          .update(valuations)
+          .set({
+            value: updatedLinkedValue,
+            recordedAt: validatedData.date,
+            notes: getAutoValuationNote(oldTransaction.type, validatedData.notes),
+          })
+          .where(eq(valuations.id, linkedValuation.id));
       }
     });
 
@@ -172,7 +218,7 @@ export async function PUT(
 }
 
 export async function DELETE(
-  request: Request,
+  _request: Request,
   { params }: { params: Promise<{ id: string; trxId: string }> }
 ) {
   try {
@@ -227,16 +273,29 @@ export async function DELETE(
         })
         .where(and(eq(assets.id, id), eq(assets.userId, session.user.id)));
 
+      const assetValuations = await tx
+        .select()
+        .from(valuations)
+        .where(eq(valuations.assetId, id));
+
+      const linkedValuation = assetValuations.find(
+        (valuation) => new Date(valuation.recordedAt).getTime() === new Date(oldTransaction.date).getTime(),
+      );
+
       await tx.delete(transactions).where(and(eq(transactions.id, trxId), eq(transactions.assetId, id)));
 
-      if (valuationDiff !== 0) {
-        const subsequentValuations = await db.query.valuations.findMany({
-          where: eq(valuations.assetId, id)
-        });
+      if (linkedValuation) {
+        await tx.delete(valuations).where(eq(valuations.id, linkedValuation.id));
+      }
 
+      if (valuationDiff !== 0) {
         const oldTxTime = new Date(oldTransaction.date).getTime();
         
-        for (const val of subsequentValuations) {
+        for (const val of assetValuations) {
+          if (linkedValuation && val.id === linkedValuation.id) {
+            continue;
+          }
+
           if (new Date(val.recordedAt).getTime() >= oldTxTime) {
             await tx
               .update(valuations)

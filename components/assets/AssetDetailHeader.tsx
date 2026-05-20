@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, Trash2, Edit, ArrowUpFromLine } from "lucide-react";
+import { ChevronLeft, Trash2, Edit, ArrowDownToLine, ArrowUpFromLine } from "lucide-react";
 import { toast } from "sonner";
 import { useState } from "react";
 
@@ -91,6 +91,14 @@ export function AssetDetailHeader({ asset }: AssetDetailHeaderProps) {
       </div>
 
       <div className="flex items-center gap-2 sm:ml-auto">
+        {asset.status !== "SOLD" && (
+          <Button variant="outline" asChild className="border-blue-500/20 text-blue-600 hover:bg-blue-500/10">
+            <Link href={`/assets/${asset.id}/deposit`}>
+              <ArrowDownToLine size={16} className="mr-2" />
+              Deposit
+            </Link>
+          </Button>
+        )}
         {asset.mode === "INVESTING" && asset.status !== "SOLD" && (
           <Button variant="outline" asChild className="border-emerald-500/20 text-emerald-600 hover:bg-emerald-500/10">
             <Link href={`/assets/${asset.id}/sell`}>
