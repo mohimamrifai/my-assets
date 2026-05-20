@@ -27,10 +27,11 @@ export async function GET() {
 
     let netWorth = 0;
     let totalCapital = 0;
+    let globalRealizedGain = 0;
 
     const byMode = {
-      investing: { netWorth: 0, totalModal: 0, gainLoss: { nominal: 0, percent: 0 } },
-      trading: { netWorth: 0, totalModal: 0, gainLoss: { nominal: 0, percent: 0 } },
+      investing: { netWorth: 0, totalModal: 0, realizedGain: 0, gainLoss: { nominal: 0, percent: 0 } },
+      trading: { netWorth: 0, totalModal: 0, realizedGain: 0, gainLoss: { nominal: 0, percent: 0 } },
     };
 
     const bySector = {
@@ -53,20 +54,24 @@ export async function GET() {
 
       const latestValuation = asset.valuations?.[0];
       const currentValue = latestValuation ? latestValuation.value : modal;
+      const assetRealizedGain = asset.transactions?.reduce((sum, t) => sum + (t.realizedGain || 0), 0) || 0;
 
-      const gainLoss = calcGainLoss(currentValue, modal);
+      const gainLoss = calcGainLoss(currentValue, modal, assetRealizedGain);
 
       // Aggregate global
       netWorth += currentValue;
       totalCapital += modal;
+      globalRealizedGain += assetRealizedGain;
 
       // Aggregate by Mode
       if (asset.mode === "INVESTING") {
         byMode.investing.netWorth += currentValue;
         byMode.investing.totalModal += modal;
+        byMode.investing.realizedGain += assetRealizedGain;
       } else if (asset.mode === "TRADING") {
         byMode.trading.netWorth += currentValue;
         byMode.trading.totalModal += modal;
+        byMode.trading.realizedGain += assetRealizedGain;
       }
 
       // Aggregate by Sector
@@ -95,8 +100,8 @@ export async function GET() {
     allValuations.sort((a, b) => new Date(b.recordedAt).getTime() - new Date(a.recordedAt).getTime());
 
     // Calculate Gain/Loss for Modes
-    byMode.investing.gainLoss = calcGainLoss(byMode.investing.netWorth, byMode.investing.totalModal);
-    byMode.trading.gainLoss = calcGainLoss(byMode.trading.netWorth, byMode.trading.totalModal);
+    byMode.investing.gainLoss = calcGainLoss(byMode.investing.netWorth, byMode.investing.totalModal, byMode.investing.realizedGain);
+    byMode.trading.gainLoss = calcGainLoss(byMode.trading.netWorth, byMode.trading.totalModal, byMode.trading.realizedGain);
 
     // Calculate Percentages for Sectors
     if (netWorth > 0) {
@@ -105,7 +110,7 @@ export async function GET() {
       });
     }
 
-    const globalGainLoss = calcGainLoss(netWorth, totalCapital);
+    const globalGainLoss = calcGainLoss(netWorth, totalCapital, globalRealizedGain);
 
     const dashboardData = {
       netWorth,

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { assets, transactions } from "@/lib/db/schema";
+import { assets, transactions, valuations } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { z } from "zod";
 
@@ -90,19 +90,29 @@ export async function PUT(
       const newQty = validatedData.quantity || oldQty;
       const qtyDiff = newQty - oldQty;
 
+      // Calculate Valuation Value Difference
+      let valuationDiff = 0;
+
       if (oldTransaction.type === "DEPOSIT") {
         newCapital += amountDiff;
+        valuationDiff = amountDiff;
       } else if (oldTransaction.type === "WITHDRAWAL") {
+        // We might need to recalculate realizedGain if the withdrawal exceeds capital
+        // For simplicity, let's assume we just adjust capital first, then bound it to 0
         newCapital -= amountDiff;
+        if (newCapital < 0) {
+          // If editing makes capital negative, it means part of it is realized gain
+          // This requires a full chronological recalculation for perfect accuracy
+          // But as a simple approximation, we cap it at 0
+          newCapital = 0;
+        }
+        valuationDiff = -amountDiff;
       } else if (oldTransaction.type === "BUY") {
         newAssetQuantity += qtyDiff;
+        valuationDiff = amountDiff;
       } else if (oldTransaction.type === "SELL") {
         newAssetQuantity -= qtyDiff;
-        // if nominal sell, capital changes
-        if (asset.isNominal) {
-            // approximation: we don't fully support editing sell amount for nominal correctly here
-            // but we can adjust capital by the diff if we want
-        }
+        valuationDiff = -amountDiff;
       }
 
       // Update asset
@@ -126,6 +136,25 @@ export async function PUT(
           fundSource: validatedData.fundSource,
         })
         .where(and(eq(transactions.id, trxId), eq(transactions.assetId, id)));
+
+      // Recalculate subsequent valuations if there is a valuationDiff
+      if (valuationDiff !== 0) {
+        // Find all valuations after or at the old transaction date
+        const subsequentValuations = await db.query.valuations.findMany({
+          where: eq(valuations.assetId, id)
+        });
+
+        const oldTxTime = new Date(oldTransaction.date).getTime();
+        
+        for (const val of subsequentValuations) {
+          if (new Date(val.recordedAt).getTime() >= oldTxTime) {
+            await tx
+              .update(valuations)
+              .set({ value: Math.max(0, val.value + valuationDiff) })
+              .where(eq(valuations.id, val.id));
+          }
+        }
+      }
     });
 
     return NextResponse.json({ success: true });
@@ -166,15 +195,20 @@ export async function DELETE(
     await db.transaction(async (tx) => {
       let newCapital = asset.initialCapital || 0;
       let newAssetQuantity = asset.quantity || 0;
+      let valuationDiff = 0;
 
       if (oldTransaction.type === "DEPOSIT") {
         newCapital -= oldTransaction.amount;
+        valuationDiff = -oldTransaction.amount;
       } else if (oldTransaction.type === "WITHDRAWAL") {
-        newCapital += oldTransaction.amount;
+        newCapital += (oldTransaction.amount - (oldTransaction.realizedGain || 0));
+        valuationDiff = oldTransaction.amount;
       } else if (oldTransaction.type === "BUY") {
         newAssetQuantity -= (oldTransaction.quantity || 0);
+        valuationDiff = -oldTransaction.amount;
       } else if (oldTransaction.type === "SELL") {
         newAssetQuantity += (oldTransaction.quantity || 0);
+        valuationDiff = oldTransaction.amount;
       }
 
       await tx
@@ -187,6 +221,23 @@ export async function DELETE(
         .where(and(eq(assets.id, id), eq(assets.userId, session.user.id)));
 
       await tx.delete(transactions).where(and(eq(transactions.id, trxId), eq(transactions.assetId, id)));
+
+      if (valuationDiff !== 0) {
+        const subsequentValuations = await db.query.valuations.findMany({
+          where: eq(valuations.assetId, id)
+        });
+
+        const oldTxTime = new Date(oldTransaction.date).getTime();
+        
+        for (const val of subsequentValuations) {
+          if (new Date(val.recordedAt).getTime() >= oldTxTime) {
+            await tx
+              .update(valuations)
+              .set({ value: Math.max(0, val.value + valuationDiff) })
+              .where(eq(valuations.id, val.id));
+          }
+        }
+      }
     });
 
     return NextResponse.json({ success: true });

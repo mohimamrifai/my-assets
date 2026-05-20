@@ -136,6 +136,7 @@ function TransactionForm({ params }: { params: Promise<{ id: string }> }) {
     : currentCapital;
 
   const newCapital = currentCapital - currentAmount < 0 ? 0 : currentCapital - currentAmount;
+  const realizedGainPred = currentCapital - currentAmount < 0 ? currentAmount - currentCapital : 0;
   const newValuationValue = latestValuation - currentAmount;
   const isInsufficient = currentAmount > latestValuation;
 
@@ -216,8 +217,16 @@ function TransactionForm({ params }: { params: Promise<{ id: string }> }) {
                     {formatCurrency(newCapital, currency)}
                   </span>
                 </div>
+                {realizedGainPred > 0 && (
+                  <div className="flex justify-between items-center text-sm border-t border-border pt-2 mt-1">
+                    <span className="font-medium text-emerald-600">Pencairan Profit (Realized Gain):</span>
+                    <span className="font-bold text-emerald-600">
+                      +{formatCurrency(realizedGainPred, currency)}
+                    </span>
+                  </div>
+                )}
                 <p className="text-xs text-muted-foreground mt-1 text-center bg-card p-2 rounded border border-border/50">
-                  💡 Gain/Loss tidak akan berubah karena perubahan ini hanya menyesuaikan modal.
+                  💡 Total Gain/Loss tidak akan berkurang, karena pencairan profit akan dicatat sebagai Realized Gain.
                 </p>
               </div>
 

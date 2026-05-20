@@ -126,7 +126,8 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
     : null;
 
   const currentValue = latestValuation ? latestValuation.value : totalModal;
-  const gainLoss = calcGainLoss(currentValue, totalModal);
+  const totalRealizedGain = asset.transactions.reduce((sum, t) => sum + (t.realizedGain || 0), 0);
+  const gainLoss = calcGainLoss(currentValue, totalModal, totalRealizedGain);
 
   // Map to AssetWithLatestValuation for the header
   const headerAsset = {
@@ -269,8 +270,38 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
                 ) : (
                   [...filteredValuations].reverse().map((val, index, arr) => {
                     const prevVal = index < arr.length - 1 ? arr[index + 1] : null;
-                    const changeNominal = prevVal ? val.value - prevVal.value : 0;
-                    const changePercent = prevVal && prevVal.value !== 0 ? (changeNominal / prevVal.value) * 100 : 0;
+                    
+                    // Menghitung Net Cash Flow (Deposit/Withdraw/Buy/Sell) yang terjadi antara prevVal dan val
+                    let netCashFlow = 0;
+                    if (prevVal) {
+                      const valTime = new Date(val.recordedAt).getTime();
+                      const prevTime = new Date(prevVal.recordedAt).getTime();
+                      
+                      netCashFlow = asset.transactions.reduce((sum, t) => {
+                        const tTime = new Date(t.date).getTime();
+                        // Transaksi yang terjadi SETELAH prevVal hingga TEPAT SAAT val
+                        if (tTime > prevTime && tTime <= valTime) {
+                          if (t.type === "DEPOSIT" || t.type === "BUY") return sum + t.amount;
+                          if (t.type === "WITHDRAWAL" || t.type === "SELL") return sum - t.amount;
+                        }
+                        return sum;
+                      }, 0);
+                    } else {
+                      // Jika ini valuasi pertama, anggap semua transaksi hingga titik ini sebagai modal awal
+                      const valTime = new Date(val.recordedAt).getTime();
+                      netCashFlow = asset.transactions.reduce((sum, t) => {
+                        const tTime = new Date(t.date).getTime();
+                        if (tTime <= valTime) {
+                          if (t.type === "DEPOSIT" || t.type === "BUY") return sum + t.amount;
+                          if (t.type === "WITHDRAWAL" || t.type === "SELL") return sum - t.amount;
+                        }
+                        return sum;
+                      }, 0);
+                    }
+
+                    const adjustedPrevValue = prevVal ? prevVal.value + netCashFlow : netCashFlow;
+                    const changeNominal = val.value - adjustedPrevValue;
+                    const changePercent = adjustedPrevValue !== 0 ? (changeNominal / adjustedPrevValue) * 100 : 0;
                     
                     return (
                       <TableRow key={val.id} className="border-border/50 hover:bg-muted/30 transition-colors">

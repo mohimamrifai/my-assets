@@ -43,6 +43,7 @@ export async function POST(
 
     let newCapital = currentCapital;
     let newValuationValue = latestValuation;
+    let realizedGain = 0;
 
     if (validatedData.type === "DEPOSIT") {
       newCapital += validatedData.amount;
@@ -52,10 +53,9 @@ export async function POST(
          return NextResponse.json({ success: false, error: "Saldo tidak mencukupi untuk withdraw" }, { status: 400 });
       }
       
-      // Hitung gain/loss untuk menentukan porsi pengurangan modal
-      // total modal = net deposit + gain/loss
-      // penarikan tidak boleh membuat modal menjadi negatif
+      // Hitung realizedGain jika penarikan melebihi Total Modal saat ini
       if (newCapital - validatedData.amount < 0) {
+        realizedGain = validatedData.amount - newCapital;
         newCapital = 0;
       } else {
         newCapital -= validatedData.amount;
@@ -80,6 +80,7 @@ export async function POST(
           assetId: id,
           type: validatedData.type,
           amount: validatedData.amount,
+          realizedGain: realizedGain > 0 ? realizedGain : null,
           date: validatedData.date,
           fundSource: validatedData.fundSource,
           notes: validatedData.notes,
