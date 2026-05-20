@@ -4,8 +4,8 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { assets, valuations, transactions } from "@/lib/db/schema";
 import { createAssetSchema } from "@/lib/validations";
-import { calcTotalModal, calcGainLoss } from "@/lib/calculations";
-import { desc, eq } from "drizzle-orm";
+import { calcTotalModal, calcGainLoss, calcReturnBase } from "@/lib/calculations";
+import { desc, eq, and, isNull, or } from "drizzle-orm";
 
 export async function GET() {
   try {
@@ -32,8 +32,9 @@ export async function GET() {
 
       const latestValuation = asset.valuations?.[0];
       const currentValue = latestValuation ? latestValuation.value : totalModal;
+      const returnBase = calcReturnBase(totalModal);
 
-      const gainLoss = calcGainLoss(currentValue, totalModal);
+      const gainLoss = calcGainLoss(currentValue, totalModal, 0, returnBase);
 
       return {
         ...asset,
@@ -61,8 +62,84 @@ export async function POST(request: Request) {
     const body = await request.json();
     const validatedData = createAssetSchema.parse(body);
 
+    const existingInvestingAsset = validatedData.mode === "INVESTING"
+      ? await db.query.assets.findFirst({
+          where: and(
+            eq(assets.userId, session.user.id),
+            eq(assets.mode, "INVESTING"),
+            eq(assets.type, validatedData.type),
+            eq(assets.name, validatedData.name || ""),
+            eq(assets.isNominal, validatedData.isNominal),
+            validatedData.platformName
+              ? eq(assets.platformName, validatedData.platformName)
+              : or(eq(assets.platformName, ""), isNull(assets.platformName)),
+            eq(assets.status, "ACTIVE"),
+          ),
+          with: {
+            valuations: {
+              orderBy: [desc(valuations.recordedAt)],
+              limit: 1,
+            },
+          },
+        })
+      : null;
+
     // Start a transaction
     const newAsset = await db.transaction(async (tx) => {
+      if (existingInvestingAsset) {
+        const addedCapital = validatedData.isNominal
+          ? validatedData.initialCapital || 0
+          : calcTotalModal(validatedData.type, validatedData.quantity || 0, validatedData.buyPrice || 0);
+        const latestValue = existingInvestingAsset.valuations[0]?.value ?? 0;
+        const currentQuantity = existingInvestingAsset.quantity || 0;
+        const addedQuantity = validatedData.quantity || 0;
+        const newQuantity = validatedData.isNominal ? currentQuantity : currentQuantity + addedQuantity;
+        const existingCapital = calcTotalModal(
+          existingInvestingAsset.type,
+          existingInvestingAsset.quantity || 0,
+          existingInvestingAsset.buyPrice || 0,
+          existingInvestingAsset.isNominal,
+          existingInvestingAsset.initialCapital || 0,
+        );
+        const newCapital = existingCapital + addedCapital;
+        const unitDivisor = validatedData.type === "SAHAM" ? newQuantity * 100 : newQuantity;
+        const nextBuyPrice = validatedData.isNominal || unitDivisor <= 0 ? existingInvestingAsset.buyPrice : newCapital / unitDivisor;
+        const recordedAt = validatedData.buyDate || new Date();
+
+        const [updatedAsset] = await tx
+          .update(assets)
+          .set({
+            quantity: validatedData.isNominal ? existingInvestingAsset.quantity : newQuantity,
+            buyPrice: nextBuyPrice,
+            initialCapital: validatedData.isNominal ? newCapital : existingInvestingAsset.initialCapital,
+            buyDate: existingInvestingAsset.buyDate || validatedData.buyDate,
+            platformName: existingInvestingAsset.platformName || validatedData.platformName || null,
+            notes: validatedData.notes || existingInvestingAsset.notes,
+            updatedAt: new Date(),
+          })
+          .where(eq(assets.id, existingInvestingAsset.id))
+          .returning();
+
+        await tx.insert(valuations).values({
+          assetId: existingInvestingAsset.id,
+          value: latestValue + addedCapital,
+          recordedAt,
+          notes: validatedData.notes,
+        });
+
+        await tx.insert(transactions).values({
+          assetId: existingInvestingAsset.id,
+          type: "BUY",
+          amount: addedCapital,
+          quantity: validatedData.isNominal ? null : addedQuantity,
+          fundSource: validatedData.fundSource,
+          date: recordedAt,
+          notes: validatedData.notes,
+        });
+
+        return updatedAsset;
+      }
+
       const [insertedAsset] = await tx
         .insert(assets)
         .values({
@@ -75,7 +152,7 @@ export async function POST(request: Request) {
           quantity: validatedData.quantity,
           buyPrice: validatedData.buyPrice,
           buyDate: validatedData.buyDate,
-          platformName: validatedData.platformName,
+          platformName: validatedData.platformName || null,
           initialCapital: validatedData.initialCapital,
         })
         .returning();

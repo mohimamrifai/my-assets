@@ -1,5 +1,11 @@
 import { AssetType } from "@/types";
 
+type ReturnTransaction = {
+  type: "BUY" | "SELL" | "DEPOSIT" | "WITHDRAWAL" | "UPDATE";
+  amount: number;
+  realizedGain?: number | null;
+};
+
 export function calcTotalModal(type: AssetType, quantity: number, buyPrice: number, isNominal: boolean = false, initialCapital: number = 0): number {
   if (isNominal) {
     return initialCapital;
@@ -17,11 +23,28 @@ export function calcCurrentValue(type: AssetType, quantity: number, currentPrice
   return quantity * currentPrice;
 }
 
-export function calcGainLoss(currentValue: number, totalModal: number, realizedGain: number = 0): { nominal: number; percent: number } {
+export function calcReturnBase(
+  totalModal: number,
+  transactions: ReturnTransaction[] = [],
+): number {
+  const principalRecovered = transactions.reduce((sum, transaction) => {
+    if (transaction.type !== "SELL" && transaction.type !== "WITHDRAWAL") {
+      return sum;
+    }
+
+    return sum + (transaction.amount - (transaction.realizedGain || 0));
+  }, 0);
+
+  return totalModal + principalRecovered;
+}
+
+export function calcGainLoss(
+  currentValue: number,
+  totalModal: number,
+  realizedGain: number = 0,
+  returnBase: number = totalModal,
+): { nominal: number; percent: number } {
   const nominal = (currentValue - totalModal) + realizedGain;
-  // If we have totalModal, percent is based on it. If totalModal is 0 but we have realizedGain, we can calculate percent based on the realizedGain?
-  // Actually, if totalModal is 0, it means all capital is withdrawn. The percent return could be infinite.
-  // We'll stick to totalModal > 0 for percentage, or if totalModal is 0 but we have realizedGain, maybe 100% or infinite. We'll return 0 for now to avoid Infinity.
-  const percent = totalModal > 0 ? (nominal / totalModal) * 100 : 0;
+  const percent = returnBase > 0 ? (nominal / returnBase) * 100 : 0;
   return { nominal, percent };
 }

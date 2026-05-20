@@ -3,7 +3,7 @@ import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { valuations, transactions, assets } from "@/lib/db/schema";
-import { calcTotalModal, calcGainLoss } from "@/lib/calculations";
+import { calcTotalModal, calcGainLoss, calcReturnBase } from "@/lib/calculations";
 import { desc, eq } from "drizzle-orm";
 
 export async function GET() {
@@ -55,8 +55,9 @@ export async function GET() {
       const latestValuation = asset.valuations?.[0];
       const currentValue = latestValuation ? latestValuation.value : modal;
       const assetRealizedGain = asset.transactions?.reduce((sum, t) => sum + (t.realizedGain || 0), 0) || 0;
+      const returnBase = calcReturnBase(modal, asset.transactions || []);
 
-      const gainLoss = calcGainLoss(currentValue, modal, assetRealizedGain);
+      const gainLoss = calcGainLoss(currentValue, modal, assetRealizedGain, returnBase);
 
       // Aggregate global
       netWorth += currentValue;
@@ -100,8 +101,36 @@ export async function GET() {
     allValuations.sort((a, b) => new Date(b.recordedAt).getTime() - new Date(a.recordedAt).getTime());
 
     // Calculate Gain/Loss for Modes
-    byMode.investing.gainLoss = calcGainLoss(byMode.investing.netWorth, byMode.investing.totalModal, byMode.investing.realizedGain);
-    byMode.trading.gainLoss = calcGainLoss(byMode.trading.netWorth, byMode.trading.totalModal, byMode.trading.realizedGain);
+    const investingReturnBase = allAssets
+      .filter((asset) => asset.mode === "INVESTING")
+      .reduce((sum, asset) => {
+        const modal = calcTotalModal(
+          asset.type,
+          asset.quantity || 0,
+          asset.buyPrice || 0,
+          asset.isNominal,
+          asset.initialCapital || 0,
+        );
+
+        return sum + calcReturnBase(modal, asset.transactions || []);
+      }, 0);
+
+    const tradingReturnBase = allAssets
+      .filter((asset) => asset.mode === "TRADING")
+      .reduce((sum, asset) => sum + calcReturnBase(asset.initialCapital || 0, asset.transactions || []), 0);
+
+    byMode.investing.gainLoss = calcGainLoss(
+      byMode.investing.netWorth,
+      byMode.investing.totalModal,
+      byMode.investing.realizedGain,
+      investingReturnBase,
+    );
+    byMode.trading.gainLoss = calcGainLoss(
+      byMode.trading.netWorth,
+      byMode.trading.totalModal,
+      byMode.trading.realizedGain,
+      tradingReturnBase,
+    );
 
     // Calculate Percentages for Sectors
     if (netWorth > 0) {
@@ -110,7 +139,16 @@ export async function GET() {
       });
     }
 
-    const globalGainLoss = calcGainLoss(netWorth, totalCapital, globalRealizedGain);
+    const globalReturnBase = allAssets.reduce((sum, asset) => {
+      const modal =
+        asset.mode === "INVESTING"
+          ? calcTotalModal(asset.type, asset.quantity || 0, asset.buyPrice || 0, asset.isNominal, asset.initialCapital || 0)
+          : asset.initialCapital || 0;
+
+      return sum + calcReturnBase(modal, asset.transactions || []);
+    }, 0);
+
+    const globalGainLoss = calcGainLoss(netWorth, totalCapital, globalRealizedGain, globalReturnBase);
 
     const dashboardData = {
       netWorth,

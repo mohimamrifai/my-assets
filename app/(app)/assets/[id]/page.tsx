@@ -20,7 +20,7 @@ import { Button } from "@/components/ui/button";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { CurrencyDisplay } from "@/components/shared/CurrencyDisplay";
 import { GainLossBadge } from "@/components/shared/GainLossBadge";
-import { calcTotalModal, calcGainLoss } from "@/lib/calculations";
+import { calcTotalModal, calcGainLoss, calcReturnBase } from "@/lib/calculations";
 import { HistoryFilter, TimeFilter, filterByTime } from "@/components/shared/HistoryFilter";
 import { Asset, Valuation, Transaction } from "@/types";
 
@@ -127,7 +127,8 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
 
   const currentValue = latestValuation ? latestValuation.value : totalModal;
   const totalRealizedGain = asset.transactions.reduce((sum, t) => sum + (t.realizedGain || 0), 0);
-  const gainLoss = calcGainLoss(currentValue, totalModal, totalRealizedGain);
+  const returnBase = calcReturnBase(totalModal, asset.transactions);
+  const gainLoss = calcGainLoss(currentValue, totalModal, totalRealizedGain, returnBase);
 
   // Map to AssetWithLatestValuation for the header
   const headerAsset = {

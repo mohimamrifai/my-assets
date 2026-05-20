@@ -24,7 +24,7 @@ export async function POST(
     // quantitySold: quantity sold (if not nominal based)
     // date: sell date
     // notes: optional notes
-    const { amount, quantitySold, date, notes } = body;
+    const { amount, quantitySold, date, fundSource, notes } = body;
 
     const asset = await db.query.assets.findFirst({
       where: and(eq(assets.id, id), eq(assets.userId, session.user.id)),
@@ -46,53 +46,52 @@ export async function POST(
       let newQuantity = asset.quantity;
       let newInitialCapital = asset.initialCapital;
       let newValuationValue = 0;
+      let newBuyPrice = asset.buyPrice;
+      const latestValue = asset.valuations[0]?.value
+        || calcTotalModal(asset.type, asset.quantity || 0, asset.buyPrice || 0, asset.isNominal, asset.initialCapital || 0);
+      const currentCapital = asset.isNominal
+        ? asset.initialCapital || 0
+        : calcTotalModal(asset.type, asset.quantity || 0, asset.buyPrice || 0);
+
+      if (!amount || amount <= 0) {
+        throw new Error("Nominal penjualan tidak valid");
+      }
+
+      if (amount > latestValue) {
+        throw new Error("Nilai penjualan melebihi total net worth saat ini");
+      }
+
+      const currentProfit = Math.max(0, latestValue - currentCapital);
+      const principalReduction = Math.max(0, amount - currentProfit);
+
+      realizedGain = amount - principalReduction;
+      newInitialCapital = Math.max(0, currentCapital - principalReduction);
+      newValuationValue = Math.max(0, latestValue - amount);
 
       if (asset.isNominal) {
-        // Nominal selling
-        if (amount >= (asset.initialCapital || 0)) {
-          // Sell all
-          realizedGain = amount - (asset.initialCapital || 0);
-          isSoldOut = true;
+        isSoldOut = newValuationValue <= 0;
+        if (isSoldOut) {
           newInitialCapital = 0;
           newValuationValue = 0;
-        } else {
-          // Sell partial
-          // To calculate gain/loss for partial nominal sell, we need to know the current value.
-          // Wait, if it's nominal, initialCapital is the cost.
-          // If they sell a portion of it... how do we know the cost basis of the sold portion?
-          // For simplicity, let's say they just reduce the initialCapital by the proportion of the sell amount vs current value.
-          const latestValue = asset.valuations[0]?.value || (asset.initialCapital || 0);
-          const sellProportion = amount / latestValue;
-          
-          const costBasis = (asset.initialCapital || 0) * sellProportion;
-          realizedGain = amount - costBasis;
-          
-          newInitialCapital = (asset.initialCapital || 0) - costBasis;
-          newValuationValue = latestValue - amount;
         }
       } else {
-        // Quantity based selling
         if (!quantitySold || quantitySold <= 0) {
           throw new Error("Quantity to sell is required");
         }
-        
-        if (quantitySold >= (asset.quantity || 0)) {
-          // Sell all
-          const totalCost = calcTotalModal(asset.type, asset.quantity || 0, asset.buyPrice || 0);
-          realizedGain = amount - totalCost;
+
+        if (quantitySold > (asset.quantity || 0)) {
+          throw new Error("Kuantitas penjualan melebihi kepemilikan aset");
+        }
+
+        if (quantitySold >= (asset.quantity || 0) || newValuationValue <= 0) {
           isSoldOut = true;
           newQuantity = 0;
+          newInitialCapital = 0;
           newValuationValue = 0;
         } else {
-          // Sell partial
-          const costBasis = calcTotalModal(asset.type, quantitySold, asset.buyPrice || 0);
-          realizedGain = amount - costBasis;
           newQuantity = (asset.quantity || 0) - quantitySold;
-          
-          // Adjust valuation value proportionally
-          const latestValue = asset.valuations[0]?.value || calcTotalModal(asset.type, asset.quantity || 0, asset.buyPrice || 0);
-          const currentPricePerUnit = latestValue / (asset.type === "SAHAM" ? (asset.quantity || 1) * 100 : (asset.quantity || 1));
-          newValuationValue = calcTotalModal(asset.type, newQuantity, currentPricePerUnit);
+          const unitDivisor = asset.type === "SAHAM" ? newQuantity * 100 : newQuantity;
+          newBuyPrice = unitDivisor > 0 ? newInitialCapital / unitDivisor : asset.buyPrice;
         }
       }
 
@@ -101,6 +100,7 @@ export async function POST(
         .update(assets)
         .set({ 
           quantity: newQuantity,
+          buyPrice: newBuyPrice,
           initialCapital: newInitialCapital,
           status: isSoldOut ? "SOLD" : "ACTIVE",
           updatedAt: new Date() 
@@ -116,6 +116,7 @@ export async function POST(
           amount: amount,
           quantity: quantitySold || null,
           realizedGain: realizedGain,
+          fundSource: fundSource || null,
           date: new Date(date),
           notes: notes || `Penjualan aset`,
         });
