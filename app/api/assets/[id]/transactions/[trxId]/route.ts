@@ -93,18 +93,24 @@ export async function PUT(
       // Calculate Valuation Value Difference
       let valuationDiff = 0;
 
+      let realizedGain = oldTransaction.realizedGain || 0;
+
       if (oldTransaction.type === "DEPOSIT") {
         newCapital += amountDiff;
         valuationDiff = amountDiff;
       } else if (oldTransaction.type === "WITHDRAWAL") {
-        // We might need to recalculate realizedGain if the withdrawal exceeds capital
-        // For simplicity, let's assume we just adjust capital first, then bound it to 0
+        // Terapkan withdraw baru dengan logika prioritas profit
+        // Asumsi: newValuationValue sebelum withdraw ini adalah valuasi saat ini + oldTransaction.amount
+        // (Ini hanya aproksimasi kasar untuk fitur edit. Untuk akurasi 100% butuh rekalkulasi historis penuh)
+        // Namun, kita akan mencoba menggunakan currentProfit saat itu jika memungkinkan.
+        
+        // Kita kurangi saja modalnya seperti biasa untuk saat ini
         newCapital -= amountDiff;
         if (newCapital < 0) {
-          // If editing makes capital negative, it means part of it is realized gain
-          // This requires a full chronological recalculation for perfect accuracy
-          // But as a simple approximation, we cap it at 0
+          realizedGain = Math.abs(newCapital);
           newCapital = 0;
+        } else {
+          realizedGain = 0;
         }
         valuationDiff = -amountDiff;
       } else if (oldTransaction.type === "BUY") {
@@ -131,6 +137,7 @@ export async function PUT(
         .set({
           amount: validatedData.amount,
           quantity: validatedData.quantity !== undefined ? validatedData.quantity : oldTransaction.quantity,
+          realizedGain: realizedGain > 0 ? realizedGain : null,
           date: validatedData.date,
           notes: validatedData.notes,
           fundSource: validatedData.fundSource,

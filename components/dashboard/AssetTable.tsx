@@ -170,6 +170,22 @@ export function AssetTable({ assets }: AssetTableProps) {
                           <span className="font-medium">Update Valuasi</span>
                         </Link>
                       </DropdownMenuItem>
+                      {asset.mode === "INVESTING" && asset.status !== "SOLD" && (
+                        <DropdownMenuItem asChild className="cursor-pointer">
+                          <Link href={`/assets/${asset.id}/sell`} className="flex items-center text-orange-600 focus:text-orange-700">
+                            <ArrowUpRight size={14} className="mr-2" />
+                            <span className="font-medium">Jual Aset</span>
+                          </Link>
+                        </DropdownMenuItem>
+                      )}
+                      {asset.mode === "TRADING" && (
+                        <DropdownMenuItem asChild className="cursor-pointer">
+                          <Link href={`/assets/${asset.id}/transaction`} className="flex items-center text-orange-600 focus:text-orange-700">
+                            <ArrowUpRight size={14} className="mr-2" />
+                            <span className="font-medium">Withdraw</span>
+                          </Link>
+                        </DropdownMenuItem>
+                      )}
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </TableCell>

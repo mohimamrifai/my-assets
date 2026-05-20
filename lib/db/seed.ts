@@ -4,6 +4,7 @@ dotenv.config({ path: ".env.local" });
 import { db } from "./index";
 import { assets, valuations, transactions, user } from "./schema";
 import { auth } from "../auth";
+import { eq, not } from "drizzle-orm";
 
 async function seed() {
   console.log("🌱 Seeding database...");
@@ -46,6 +47,9 @@ async function seed() {
     await db.delete(transactions);
     await db.delete(valuations);
     await db.delete(assets);
+    
+    // Hapus semua akun user KECUALI admin
+    await db.delete(user).where(not(eq(user.email, "admin@myassets.com")));
 
     console.log("✅ Database reset & Admin seed completed! Clean slate ready.");
   } catch (error) {

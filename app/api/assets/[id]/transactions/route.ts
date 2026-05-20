@@ -53,13 +53,27 @@ export async function POST(
          return NextResponse.json({ success: false, error: "Saldo tidak mencukupi untuk withdraw" }, { status: 400 });
       }
       
-      // Hitung realizedGain jika penarikan melebihi Total Modal saat ini
-      if (newCapital - validatedData.amount < 0) {
-        realizedGain = validatedData.amount - newCapital;
-        newCapital = 0;
+      const currentProfit = newValuationValue - currentCapital;
+      
+      // Logika Klien: Pemotongan withdraw diprioritaskan dari Profit terlebih dahulu
+      if (currentProfit > 0) {
+        if (validatedData.amount <= currentProfit) {
+          // Withdraw hanya mengambil dari profit
+          realizedGain = validatedData.amount;
+          // Modal utuh, tidak berkurang
+        } else {
+          // Withdraw mengambil semua profit, sisanya baru potong modal
+          realizedGain = currentProfit;
+          const excessWithdraw = validatedData.amount - currentProfit;
+          newCapital -= excessWithdraw;
+        }
       } else {
+        // Jika tidak ada profit (loss / breakeven), langsung potong modal
         newCapital -= validatedData.amount;
       }
+      
+      // Safety net agar modal tidak minus (seharusnya tidak terjadi jika validasi amount > newValuationValue jalan)
+      if (newCapital < 0) newCapital = 0;
       
       newValuationValue -= validatedData.amount;
     } else {

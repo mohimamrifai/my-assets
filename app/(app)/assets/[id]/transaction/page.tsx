@@ -135,8 +135,26 @@ function TransactionForm({ params }: { params: Promise<{ id: string }> }) {
     ? asset.valuations[asset.valuations.length - 1].value 
     : currentCapital;
 
-  const newCapital = currentCapital - currentAmount < 0 ? 0 : currentCapital - currentAmount;
-  const realizedGainPred = currentCapital - currentAmount < 0 ? currentAmount - currentCapital : 0;
+  const currentProfit = latestValuation - currentCapital;
+  
+  let newCapital = currentCapital;
+  let realizedGainPred = 0;
+  
+  if (currentProfit > 0) {
+    if (currentAmount <= currentProfit) {
+      realizedGainPred = currentAmount;
+      // Modal tidak berkurang
+    } else {
+      realizedGainPred = currentProfit;
+      const excessWithdraw = currentAmount - currentProfit;
+      newCapital = currentCapital - excessWithdraw;
+    }
+  } else {
+    newCapital = currentCapital - currentAmount;
+  }
+  
+  if (newCapital < 0) newCapital = 0;
+
   const newValuationValue = latestValuation - currentAmount;
   const isInsufficient = currentAmount > latestValuation;
 
@@ -219,14 +237,14 @@ function TransactionForm({ params }: { params: Promise<{ id: string }> }) {
                 </div>
                 {realizedGainPred > 0 && (
                   <div className="flex justify-between items-center text-sm border-t border-border pt-2 mt-1">
-                    <span className="font-medium text-emerald-600">Pencairan Profit (Realized Gain):</span>
+                    <span className="font-medium text-emerald-600">Pemotongan Profit (Realized Gain):</span>
                     <span className="font-bold text-emerald-600">
                       +{formatCurrency(realizedGainPred, currency)}
                     </span>
                   </div>
                 )}
                 <p className="text-xs text-muted-foreground mt-1 text-center bg-card p-2 rounded border border-border/50">
-                  💡 Total Gain/Loss tidak akan berkurang, karena pencairan profit akan dicatat sebagai Realized Gain.
+                  💡 Withdraw diprioritaskan memotong profit terlebih dahulu agar modal utuh. Total Gain/Loss tidak akan berkurang.
                 </p>
               </div>
 
