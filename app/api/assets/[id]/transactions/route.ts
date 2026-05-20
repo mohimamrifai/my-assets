@@ -51,7 +51,16 @@ export async function POST(
       if (validatedData.amount > newValuationValue) {
          return NextResponse.json({ success: false, error: "Saldo tidak mencukupi untuk withdraw" }, { status: 400 });
       }
-      newCapital -= validatedData.amount;
+      
+      // Hitung gain/loss untuk menentukan porsi pengurangan modal
+      // total modal = net deposit + gain/loss
+      // penarikan tidak boleh membuat modal menjadi negatif
+      if (newCapital - validatedData.amount < 0) {
+        newCapital = 0;
+      } else {
+        newCapital -= validatedData.amount;
+      }
+      
       newValuationValue -= validatedData.amount;
     } else {
       return NextResponse.json({ success: false, error: "Tipe transaksi tidak valid" }, { status: 400 });

@@ -33,14 +33,6 @@ export const createAssetSchema = baseAssetSchema.refine(data => {
   message: "Nama platform wajib diisi untuk mode Trading",
   path: ["platformName"]
 }).refine(data => {
-  if (data.mode === "INVESTING") {
-    return data.isNominal === false;
-  }
-  return true;
-}, {
-  message: "Pencatatan Nominal/Kas dinonaktifkan sesuai revisi",
-  path: ["isNominal"]
-}).refine(data => {
   if (data.mode === "INVESTING" && !data.isNominal) {
     return data.quantity !== undefined && data.quantity > 0;
   }
@@ -57,7 +49,7 @@ export const createAssetSchema = baseAssetSchema.refine(data => {
   message: "Harga beli wajib diisi",
   path: ["buyPrice"]
 }).refine(data => {
-  if (data.mode === "TRADING") {
+  if (data.mode === "TRADING" || (data.mode === "INVESTING" && data.isNominal)) {
     return data.initialCapital !== undefined && data.initialCapital > 0;
   }
   return true;

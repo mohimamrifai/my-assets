@@ -135,7 +135,7 @@ function TransactionForm({ params }: { params: Promise<{ id: string }> }) {
     ? asset.valuations[asset.valuations.length - 1].value 
     : currentCapital;
 
-  const newCapital = currentCapital - currentAmount;
+  const newCapital = currentCapital - currentAmount < 0 ? 0 : currentCapital - currentAmount;
   const newValuationValue = latestValuation - currentAmount;
   const isInsufficient = currentAmount > latestValuation;
 
