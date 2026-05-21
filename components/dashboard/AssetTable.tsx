@@ -149,53 +149,59 @@ export function AssetTable({ assets }: AssetTableProps) {
                   </div>
                 </TableCell>
                 <TableCell className="px-4 py-3 text-right">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="size-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity data-[state=open]:opacity-100 focus:opacity-100">
-                        <MoreHorizontal size={16} className="text-muted-foreground" />
-                        <span className="sr-only">Buka menu</span>
+                  <div className="flex items-center justify-end gap-2">
+                    {asset.status !== "SOLD" && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        asChild
+                        className="h-8 border-blue-500/20 bg-blue-500/[0.04] text-blue-600 hover:bg-blue-500/10 hover:text-blue-700"
+                      >
+                        <Link href={`/assets/${asset.id}/deposit`}>
+                          Deposit
+                        </Link>
                       </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-[160px] border-border/50 shadow-md rounded-xl">
-                      <DropdownMenuItem asChild className="cursor-pointer">
-                        <Link href={`/assets/${asset.id}`} className="flex items-center">
-                          <Eye size={14} className="mr-2 text-muted-foreground" />
-                          <span>Detail Aset</span>
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator className="bg-border/50" />
-                      <DropdownMenuItem asChild className="cursor-pointer">
-                        <Link href={`/assets/${asset.id}/update`} className="flex items-center text-emerald-600 focus:text-emerald-700">
-                          <ArrowUpRight size={14} className="mr-2" />
-                          <span className="font-medium">Update Valuasi</span>
-                        </Link>
-                      </DropdownMenuItem>
-                      {asset.status !== "SOLD" && (
+                    )}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="size-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity data-[state=open]:opacity-100 focus:opacity-100">
+                          <MoreHorizontal size={16} className="text-muted-foreground" />
+                          <span className="sr-only">Buka menu</span>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-[160px] border-border/50 shadow-md rounded-xl">
                         <DropdownMenuItem asChild className="cursor-pointer">
-                          <Link href={`/assets/${asset.id}/deposit`} className="flex items-center text-blue-600 focus:text-blue-700">
-                            <ArrowUpRight size={14} className="mr-2" />
-                            <span className="font-medium">Deposit</span>
+                          <Link href={`/assets/${asset.id}`} className="flex items-center">
+                            <Eye size={14} className="mr-2 text-muted-foreground" />
+                            <span>Detail Aset</span>
                           </Link>
                         </DropdownMenuItem>
-                      )}
-                      {asset.mode === "INVESTING" && asset.status !== "SOLD" && (
+                        <DropdownMenuSeparator className="bg-border/50" />
                         <DropdownMenuItem asChild className="cursor-pointer">
-                          <Link href={`/assets/${asset.id}/sell`} className="flex items-center text-orange-600 focus:text-orange-700">
+                          <Link href={`/assets/${asset.id}/update`} className="flex items-center text-emerald-600 focus:text-emerald-700">
                             <ArrowUpRight size={14} className="mr-2" />
-                            <span className="font-medium">Jual Aset</span>
+                            <span className="font-medium">Update Valuasi</span>
                           </Link>
                         </DropdownMenuItem>
-                      )}
-                      {asset.mode === "TRADING" && (
-                        <DropdownMenuItem asChild className="cursor-pointer">
-                          <Link href={`/assets/${asset.id}/transaction`} className="flex items-center text-orange-600 focus:text-orange-700">
-                            <ArrowUpRight size={14} className="mr-2" />
-                            <span className="font-medium">Withdraw</span>
-                          </Link>
-                        </DropdownMenuItem>
-                      )}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                        {asset.mode === "INVESTING" && asset.status !== "SOLD" && (
+                          <DropdownMenuItem asChild className="cursor-pointer">
+                            <Link href={`/assets/${asset.id}/sell`} className="flex items-center text-orange-600 focus:text-orange-700">
+                              <ArrowUpRight size={14} className="mr-2" />
+                              <span className="font-medium">Jual Aset</span>
+                            </Link>
+                          </DropdownMenuItem>
+                        )}
+                        {asset.mode === "TRADING" && (
+                          <DropdownMenuItem asChild className="cursor-pointer">
+                            <Link href={`/assets/${asset.id}/transaction`} className="flex items-center text-orange-600 focus:text-orange-700">
+                              <ArrowUpRight size={14} className="mr-2" />
+                              <span className="font-medium">Withdraw</span>
+                            </Link>
+                          </DropdownMenuItem>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
                 </TableCell>
               </TableRow>
             )) : (
