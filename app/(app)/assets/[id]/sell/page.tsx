@@ -40,7 +40,7 @@ export default function SellAssetPage({ params }: { params: Promise<{ id: string
 
   const { currency } = useCurrency();
   const [sellAll, setSellAll] = useState(false);
-  const [amount, setAmount] = useState<number | undefined>(undefined);
+  const [sellPrice, setSellPrice] = useState<number | undefined>(undefined);
   const [quantitySold, setQuantitySold] = useState<number | undefined>(undefined);
   const [date, setDate] = useState<Date>(new Date());
   const [fundSource, setFundSource] = useState("");
@@ -78,10 +78,13 @@ export default function SellAssetPage({ params }: { params: Promise<{ id: string
     fetchAsset();
   }, [resolvedParams.id, router]);
 
-  const onSubmit = async (e: React.FormEvent) => {
+  const onSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    const amount = calculatedAmount;
+
     if (!amount || amount <= 0) {
-      toast.error("Nominal penjualan tidak valid");
+      toast.error(asset?.isNominal ? "Nominal penjualan tidak valid" : "Harga jual tidak valid");
       return;
     }
 
@@ -140,6 +143,16 @@ export default function SellAssetPage({ params }: { params: Promise<{ id: string
   if (asset.type === "EMAS") qtyLabel = "Jumlah Gram";
   if (asset.type === "CRYPTO") qtyLabel = "Jumlah Unit";
 
+  let sellPriceLabel = `Harga Jual per Unit (${currency === "USD" ? "$" : "Rp"})`;
+  if (asset.type === "SAHAM") sellPriceLabel = `Harga Jual per Lembar (${currency === "USD" ? "$" : "Rp"})`;
+  if (asset.type === "EMAS") sellPriceLabel = `Harga Jual per Gram (${currency === "USD" ? "$" : "Rp"})`;
+
+  const effectiveQuantity = sellAll ? asset.quantity || 0 : quantitySold || 0;
+  const unitMultiplier = asset.type === "SAHAM" ? 100 : 1;
+  const calculatedAmount = asset.isNominal
+    ? sellPrice
+    : effectiveQuantity * unitMultiplier * (sellPrice || 0);
+
   return (
     <div className="max-w-2xl mx-auto space-y-6 pb-12">
       <div className="flex items-center gap-4 mb-6">
@@ -197,17 +210,40 @@ export default function SellAssetPage({ params }: { params: Promise<{ id: string
             )}
 
             <div className="space-y-2">
-              <Label>Total Dana Diterima ({currency === "USD" ? "$" : "Rp"})</Label>
+              <Label>{asset.isNominal ? `Nominal Penjualan (${currency === "USD" ? "$" : "Rp"})` : sellPriceLabel}</Label>
               <NominalInput 
-                value={amount}
-                onChange={(val) => setAmount(val)}
+                value={sellPrice}
+                onChange={(val) => setSellPrice(val)}
                 placeholder="0"
                 className="text-lg py-6 border-emerald-500/50 focus-visible:ring-emerald-500"
               />
               <p className="text-xs text-muted-foreground mt-1">
-                Dana hasil jual dicatat sebagai penjualan aset pada riwayat transaksi.
+                {asset.isNominal
+                  ? "Masukkan total nominal yang diterima dari penjualan aset ini."
+                  : "Masukkan harga jual, lalu sistem akan menghitung total penerimaan secara otomatis."}
               </p>
             </div>
+
+            {!asset.isNominal && (
+              <div className="p-4 rounded-lg bg-emerald-500/[0.04] border border-emerald-500/20 flex flex-col gap-2">
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-muted-foreground">Kuantitas Dijual:</span>
+                  <span className="font-medium text-foreground">
+                    {effectiveQuantity || 0} {asset.type === "SAHAM" ? "Lot" : asset.type === "EMAS" ? "Gram" : "Unit"}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-muted-foreground">Harga Jual:</span>
+                  <span className="font-medium text-foreground">{formatCurrency(sellPrice || 0, currency)}</span>
+                </div>
+                <div className="flex justify-between items-center text-sm pt-2 border-t border-emerald-500/15">
+                  <span className="font-medium text-foreground">Nominal Penerimaan:</span>
+                  <span className="text-lg font-bold text-emerald-600">
+                    {formatCurrency(calculatedAmount || 0, currency)}
+                  </span>
+                </div>
+              </div>
+            )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
@@ -257,7 +293,7 @@ export default function SellAssetPage({ params }: { params: Promise<{ id: string
               <Button type="button" variant="ghost" asChild disabled={isSubmitting}>
                 <Link href={`/assets/${asset.id}`}>Batal</Link>
               </Button>
-              <Button type="submit" disabled={isSubmitting || !amount} className="bg-emerald-600 hover:bg-emerald-700 text-white">
+              <Button type="submit" disabled={isSubmitting || !calculatedAmount} className="bg-emerald-600 hover:bg-emerald-700 text-white">
                 {isSubmitting ? (
                   <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Memproses...</>
                 ) : (
