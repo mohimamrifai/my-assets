@@ -101,6 +101,7 @@ export default function SellAssetPage({ params }: { params: Promise<{ id: string
         body: JSON.stringify({
           amount,
           quantitySold: sellAll ? asset?.quantity : quantitySold,
+          price: asset?.isNominal ? undefined : sellPrice,
           date,
           fundSource,
           notes,
@@ -152,6 +153,10 @@ export default function SellAssetPage({ params }: { params: Promise<{ id: string
   const calculatedAmount = asset.isNominal
     ? sellPrice
     : effectiveQuantity * unitMultiplier * (sellPrice || 0);
+  const estimatedCostBasis = asset.isNominal
+    ? 0
+    : calcTotalModal(asset.type, effectiveQuantity, asset.buyPrice || 0);
+  const estimatedRealizedGain = (calculatedAmount || 0) - estimatedCostBasis;
 
   return (
     <div className="max-w-2xl mx-auto space-y-6 pb-12">
@@ -240,6 +245,15 @@ export default function SellAssetPage({ params }: { params: Promise<{ id: string
                   <span className="font-medium text-foreground">Nominal Penerimaan:</span>
                   <span className="text-lg font-bold text-emerald-600">
                     {formatCurrency(calculatedAmount || 0, currency)}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-muted-foreground">Estimasi Gain/Loss Penjualan:</span>
+                  <span className={cn(
+                    "font-bold",
+                    estimatedRealizedGain > 0 ? "text-emerald-600" : estimatedRealizedGain < 0 ? "text-red-500" : "text-foreground"
+                  )}>
+                    {estimatedRealizedGain > 0 ? "+" : ""}{formatCurrency(estimatedRealizedGain, currency)}
                   </span>
                 </div>
               </div>

@@ -24,7 +24,7 @@ export async function POST(
     // quantitySold: quantity sold (if not nominal based)
     // date: sell date
     // notes: optional notes
-    const { amount, quantitySold, date, fundSource, notes } = body;
+    const { amount, quantitySold, price, date, fundSource, notes } = body;
 
     const asset = await db.query.assets.findFirst({
       where: and(eq(assets.id, id), eq(assets.userId, session.user.id)),
@@ -47,6 +47,7 @@ export async function POST(
       let newInitialCapital = asset.initialCapital;
       let newValuationValue = 0;
       let newBuyPrice = asset.buyPrice;
+      let finalAmount = amount;
       const latestValue = asset.valuations[0]?.value
         || calcTotalModal(asset.type, asset.quantity || 0, asset.buyPrice || 0, asset.isNominal, asset.initialCapital || 0);
       const currentCapital = asset.isNominal
@@ -57,18 +58,17 @@ export async function POST(
         throw new Error("Nominal penjualan tidak valid");
       }
 
-      if (amount > latestValue) {
-        throw new Error("Nilai penjualan melebihi total net worth saat ini");
-      }
-
-      const currentProfit = Math.max(0, latestValue - currentCapital);
-      const principalReduction = Math.max(0, amount - currentProfit);
-
-      realizedGain = amount - principalReduction;
-      newInitialCapital = Math.max(0, currentCapital - principalReduction);
-      newValuationValue = Math.max(0, latestValue - amount);
-
       if (asset.isNominal) {
+        if (amount > latestValue) {
+          throw new Error("Nominal penjualan melebihi nilai aset saat ini");
+        }
+
+        const currentProfit = Math.max(0, latestValue - currentCapital);
+        const principalReduction = Math.max(0, amount - currentProfit);
+
+        realizedGain = amount - principalReduction;
+        newInitialCapital = Math.max(0, currentCapital - principalReduction);
+        newValuationValue = Math.max(0, latestValue - amount);
         isSoldOut = newValuationValue <= 0;
         if (isSoldOut) {
           newInitialCapital = 0;
@@ -79,19 +79,34 @@ export async function POST(
           throw new Error("Quantity to sell is required");
         }
 
+        if (!price || price <= 0) {
+          throw new Error("Harga jual tidak valid");
+        }
+
         if (quantitySold > (asset.quantity || 0)) {
           throw new Error("Kuantitas penjualan melebihi kepemilikan aset");
         }
 
-        if (quantitySold >= (asset.quantity || 0) || newValuationValue <= 0) {
+        finalAmount = amount || calcTotalModal(asset.type, quantitySold, price);
+        const soldCostBasis = calcTotalModal(asset.type, quantitySold, asset.buyPrice || 0);
+        realizedGain = finalAmount - soldCostBasis;
+        newInitialCapital = Math.max(0, currentCapital - soldCostBasis);
+
+        if (quantitySold >= (asset.quantity || 0)) {
           isSoldOut = true;
           newQuantity = 0;
           newInitialCapital = 0;
           newValuationValue = 0;
         } else {
           newQuantity = (asset.quantity || 0) - quantitySold;
+          newValuationValue = calcTotalModal(asset.type, newQuantity, price);
           const unitDivisor = asset.type === "SAHAM" ? newQuantity * 100 : newQuantity;
           newBuyPrice = unitDivisor > 0 ? newInitialCapital / unitDivisor : asset.buyPrice;
+        }
+
+        if (quantitySold >= (asset.quantity || 0)) {
+          // Full exit: all remaining P/L is realized into the SELL transaction.
+          newValuationValue = 0;
         }
       }
 
@@ -113,8 +128,9 @@ export async function POST(
         .values({
           assetId: id,
           type: "SELL",
-          amount: amount,
+          amount: finalAmount,
           quantity: quantitySold || null,
+          price: price || null,
           realizedGain: realizedGain,
           fundSource: fundSource || null,
           date: new Date(date),
