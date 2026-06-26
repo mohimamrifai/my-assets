@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip, Legend } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useCurrency } from "@/components/providers/CurrencyProvider";
@@ -54,24 +54,30 @@ const CustomTooltipContent = ({ active, payload, label, currency }: { active?: b
 
 export function OverviewChart({ assets }: OverviewChartProps) {
   const { currency } = useCurrency();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const data = useMemo(() => {
     // 1. Kelompokkan aset berdasarkan nama agar tidak ada duplikasi di grafik
     const aggregated = assets.reduce((acc: Record<string, AggregatedData>, asset: ChartAsset) => {
       const name = asset.name || asset.platformName || "Unknown";
-      
+
       if (!acc[name]) {
-        acc[name] = { 
-          name, 
-          "Total Modal": 0, 
+        acc[name] = {
+          name,
+          "Total Modal": 0,
           "Nilai Terkini": 0,
           currentValue: 0 // digunakan untuk sorting nanti
         };
       }
-      
+
       acc[name]["Total Modal"] += asset.totalModal || 0;
       acc[name]["Nilai Terkini"] += asset.currentValue || 0;
       acc[name].currentValue += asset.currentValue || 0;
-      
+
       return acc;
     }, {});
 
@@ -79,7 +85,7 @@ export function OverviewChart({ assets }: OverviewChartProps) {
     const sorted = Object.values(aggregated)
       .sort((a: AggregatedData, b: AggregatedData) => b.currentValue - a.currentValue)
       .slice(0, 6);
-    
+
     // 3. Hapus properti currentValue sementara karena tidak dibutuhkan oleh Recharts display
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     return sorted.map(({ currentValue, ...rest }: AggregatedData) => rest);
@@ -97,41 +103,42 @@ export function OverviewChart({ assets }: OverviewChartProps) {
         </CardTitle>
       </CardHeader>
       <CardContent className="p-5">
-        <div className="h-[250px] w-full min-h-[250px]">
-          <ResponsiveContainer width="100%" height="100%" minHeight={250}>
+        <div className="h-[300px] w-full min-h-[300px] relative">
+          {/* Tambahkan minHeight pada props ResponsiveContainer */}
+          <ResponsiveContainer width="100%" height="100%" minHeight={300} minWidth={1}>
             <BarChart
               data={data}
               margin={{ top: 10, right: 10, left: 10, bottom: 0 }}
               barGap={4}
             >
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#2A2D3E" opacity={0.5} />
-              <XAxis 
-                dataKey="name" 
+              <XAxis
+                dataKey="name"
                 axisLine={false}
                 tickLine={false}
                 tick={{ fill: '#64748B', fontSize: 12 }}
                 dy={10}
               />
-              <YAxis 
-                hide 
+              <YAxis
+                hide
               />
               <Tooltip content={<CustomTooltipContent currency={currency} />} cursor={{ fill: '#2A2D3E', opacity: 0.2 }} />
-              <Legend 
-                verticalAlign="top" 
+              <Legend
+                verticalAlign="top"
                 height={36}
                 iconType="circle"
                 wrapperStyle={{ fontSize: '12px', color: '#64748B' }}
               />
-              <Bar 
-                dataKey="Total Modal" 
-                fill="#64748B" 
-                radius={[4, 4, 0, 0]} 
+              <Bar
+                dataKey="Total Modal"
+                fill="#64748B"
+                radius={[4, 4, 0, 0]}
                 maxBarSize={40}
               />
-              <Bar 
-                dataKey="Nilai Terkini" 
-                fill="#10B981" 
-                radius={[4, 4, 0, 0]} 
+              <Bar
+                dataKey="Nilai Terkini"
+                fill="#10B981"
+                radius={[4, 4, 0, 0]}
                 maxBarSize={40}
               />
             </BarChart>

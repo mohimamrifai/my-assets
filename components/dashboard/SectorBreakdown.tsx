@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart2, Bitcoin, Gem } from "lucide-react";
@@ -20,6 +21,12 @@ const COLORS = {
 
 export function SectorBreakdown({ saham, crypto, emas }: SectorBreakdownProps) {
   const { currency } = useCurrency();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const data = [
     { name: "Saham", value: saham.value, percent: saham.percent, color: COLORS.SAHAM, icon: BarChart2 },
     { name: "Crypto", value: crypto.value, percent: crypto.percent, color: COLORS.CRYPTO, icon: Bitcoin },
@@ -45,9 +52,12 @@ export function SectorBreakdown({ saham, crypto, emas }: SectorBreakdownProps) {
         <CardTitle className="text-base font-medium">Alokasi Sektor</CardTitle>
       </CardHeader>
       <CardContent className="flex-1 flex flex-col justify-center">
-        <div className="h-[200px] w-full relative min-h-[200px]">
-          <ResponsiveContainer width="100%" height="100%" minHeight={200}>
-            <PieChart>
+
+        <div className="h-[300px] w-full min-h-[300px] relative">
+          {/* Render setelah mount agar parent sudah punya dimensi, menghindari warning width/height -1 dari recharts */}
+          {mounted && (
+            <ResponsiveContainer width="100%" height="100%" minHeight={300} minWidth={1}>
+              <PieChart>
               <Pie
                 data={data}
                 cx="50%"
@@ -62,7 +72,7 @@ export function SectorBreakdown({ saham, crypto, emas }: SectorBreakdownProps) {
                   <Cell key={`cell-${index}`} fill={entry.color} />
                 ))}
               </Pie>
-              <RechartsTooltip 
+              <RechartsTooltip
                 content={({ active, payload }) => {
                   if (active && payload && payload.length) {
                     const data = payload[0].payload;
@@ -81,11 +91,12 @@ export function SectorBreakdown({ saham, crypto, emas }: SectorBreakdownProps) {
               />
             </PieChart>
           </ResponsiveContainer>
+          )}
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <span className="text-sm text-muted-foreground font-medium">Sektor</span>
           </div>
         </div>
-        
+
         <div className="mt-4 space-y-3">
           {data.map((item) => {
             const Icon = item.icon;
