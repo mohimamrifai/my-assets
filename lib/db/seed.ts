@@ -14,18 +14,18 @@ async function seed() {
       console.log("Creating admin user...");
       await auth.api.signUpEmail({
         body: {
-          email: "admin@myassets.com",
+          email: "admin@portolook.com",
           password: "password123",
           name: "Admin User",
         }
       });
-      console.log("Admin user created: admin@myassets.com / password123");
+      console.log("Admin user created: admin@portolook.com / password123");
     } catch {
       console.log("Admin user creation error caught, proceeding...");
     }
 
     let adminUser = await db.query.user.findFirst({
-      where: (users, { eq }) => eq(users.email, "admin@myassets.com")
+      where: (users, { eq }) => eq(users.email, "admin@portolook.com")
     });
 
     if (!adminUser) {
@@ -36,7 +36,7 @@ async function seed() {
       const userResult: any = await db.insert(user).values({
         id: crypto.randomUUID(),
         name: "Admin User",
-        email: "admin@myassets.com",
+        email: "admin@portolook.com",
         emailVerified: true,
         currency: "IDR"
       }).returning();
@@ -49,7 +49,7 @@ async function seed() {
     await db.delete(assets);
     
     // Hapus semua akun user KECUALI admin
-    await db.delete(user).where(not(eq(user.email, "admin@myassets.com")));
+    await db.delete(user).where(not(eq(user.email, "admin@portolook.com")));
 
     console.log("✅ Database reset & Admin seed completed! Clean slate ready.");
   } catch (error) {

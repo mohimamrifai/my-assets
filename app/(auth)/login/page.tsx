@@ -77,12 +77,12 @@ export default function LoginPage() {
         <div className="absolute -bottom-1/4 -right-1/4 w-96 h-96 bg-primary/20 rounded-full blur-3xl" />
 
         {/* Header/Logo */}
-        <div className="absolute top-8 left-8 sm:top-12 sm:left-12 flex items-center gap-2">
+        <div className="absolute mx-auto top-8 flex items-center gap-2">
           <Logo size={40} showText={false} />
-          <span className="font-bold text-xl tracking-tight text-primary">MyAssets</span>
+          <span className="font-bold text-xl tracking-tight text-primary">Portolook</span>
         </div>
 
-        <div className="relative z-10 space-y-6 max-w-md">
+        <div className="relative z-10 space-y-6 max-w-md pt-20">
           <h1 className="text-4xl font-semibold tracking-tight text-foreground leading-tight">
             Track your net worth with absolute precision.
           </h1>
@@ -112,8 +112,8 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <div className="relative z-10 text-sm text-muted-foreground font-medium">
-          © {new Date().getFullYear()} MyAssets Platform. All rights reserved.
+        <div className="relative z-10 text-sm text-muted-foreground font-medium pt-20">
+          © {new Date().getFullYear()} PortoLook Platform. All rights reserved.
         </div>
       </div>
 
@@ -122,7 +122,7 @@ export default function LoginPage() {
         {/* Mobile branding header */}
         <div className="absolute top-8 left-8 flex lg:hidden items-center gap-2 text-primary font-bold text-xl tracking-tight">
           <Logo size={32} showText={false} />
-          MyAssets
+          PortoLook
         </div>
 
         <div className="w-full max-w-[400px] space-y-8">
@@ -225,24 +225,14 @@ export default function LoginPage() {
           </form>
 
           <div className="text-center mt-6">
+            <span className="text-sm text-muted-foreground">{isRegistering ? "Don't have an account ?" : "Already have an account ?"}</span>
             <button 
               type="button" 
               onClick={() => setIsRegistering(!isRegistering)}
-              className="text-sm text-muted-foreground hover:text-primary transition-colors"
+              className="text-sm cursor-pointer hover:text-primary transition-colors ms-2 underline"
             >
-              {isRegistering ? "Already have an account? Sign in" : "Don't have an account? Sign up"}
+              {isRegistering ? "Sign in" : "Sign up"}
             </button>
-          </div>
-
-          <div className="relative my-8">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-border"></div>
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-background text-muted-foreground">
-                Internal system access only
-              </span>
-            </div>
           </div>
         </div>
       </div>

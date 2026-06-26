@@ -11,7 +11,7 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  title: "MyAssets",
+  title: "PortoLook | My Wealth & Asset Tracker",
   description: "Personal Wealth & Asset Tracker",
 };
 
