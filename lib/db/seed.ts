@@ -80,7 +80,7 @@ async function seed() {
 
       // --- PERBAIKAN VOLATILITAS ---
       let currentValue = initialCapital;
-      let historyDate = new Date(buyDate);
+      const historyDate = new Date(buyDate);
       
       for (let m = 0; m <= monthsActive; m++) {
         await db.insert(valuations).values({

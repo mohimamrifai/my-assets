@@ -1,0 +1,61 @@
+{
+  "metadata": {
+    "title": "PortoLook — Personal Wealth & Asset Tracker",
+    "description": "Track your portfolio across stocks, crypto, gold, and more."
+  },
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "loading": "Loading...",
+    "search": "Search",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "confirm": "Confirm",
+    "reset": "Reset",
+    "actions": "Actions"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "assets": "Assets",
+    "newAsset": "New Asset",
+    "settings": "Settings",
+    "logout": "Sign out",
+    "theme": "Theme",
+    "themeLight": "Light",
+    "themeDark": "Dark",
+    "themeSystem": "System"
+  },
+  "settings": {
+    "title": "Settings",
+    "subtitle": "Manage your preferences",
+    "profile": "Profile",
+    "profileName": "Name",
+    "profileEmail": "Email",
+    "preferences": "Preferences",
+    "language": "Language",
+    "languageDescription": "Choose your preferred language for the interface.",
+    "currency": "Display Currency",
+    "currencyDescription": "Choose how monetary values are displayed across the app.",
+    "exchangeRate": "Exchange Rate",
+    "exchangeRateDescription": "Override the automatic exchange rate. Leave empty to use live data.",
+    "exchangeRateCurrent": "Current rate",
+    "exchangeRateAuto": "Auto (via Frankfurter)",
+    "exchangeRateOverride": "Manual override",
+    "exchangeRateReset": "Reset to auto",
+    "exchangeRatePlaceholder": "e.g. 16000",
+    "saved": "Settings saved"
+  },
+  "errors": {
+    "loadFailed": "Failed to load data",
+    "networkError": "Network error occurred",
+    "saveFailed": "Failed to save changes",
+    "fxUnavailable": "Exchange rate unavailable, using fallback",
+    "fxOverrideInvalid": "Override must be a positive number"
+  },
+  "auth": {
+    "loginRequired": "You must be signed in to access this page"
+  }
+}

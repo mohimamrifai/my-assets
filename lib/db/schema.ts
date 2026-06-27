@@ -79,7 +79,9 @@ export const user = pgTable("user", {
   email: text("email").notNull().unique(),
   emailVerified: boolean("email_verified").default(false).notNull(),
   image: text("image"),
-  currency: text("currency").default("IDR").notNull(), // Tambahan untuk preferensi currency
+  currency: text("currency").default("IDR").notNull(),
+  locale: text("locale").default("en").notNull(),
+  fxRateOverride: real("fx_rate_override"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()

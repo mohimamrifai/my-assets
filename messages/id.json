@@ -1,0 +1,61 @@
+{
+  "metadata": {
+    "title": "PortoLook — Pelacak Kekayaan & Aset Pribadi",
+    "description": "Pantau portofolio Anda di saham, kripto, emas, dan lainnya."
+  },
+  "common": {
+    "save": "Simpan",
+    "cancel": "Batal",
+    "delete": "Hapus",
+    "edit": "Edit",
+    "loading": "Memuat...",
+    "search": "Cari",
+    "back": "Kembali",
+    "next": "Selanjutnya",
+    "previous": "Sebelumnya",
+    "confirm": "Konfirmasi",
+    "reset": "Reset",
+    "actions": "Aksi"
+  },
+  "nav": {
+    "dashboard": "Dasbor",
+    "assets": "Aset",
+    "newAsset": "Aset Baru",
+    "settings": "Pengaturan",
+    "logout": "Keluar",
+    "theme": "Tema",
+    "themeLight": "Terang",
+    "themeDark": "Gelap",
+    "themeSystem": "Sistem"
+  },
+  "settings": {
+    "title": "Pengaturan",
+    "subtitle": "Kelola preferensi Anda",
+    "profile": "Profil",
+    "profileName": "Nama",
+    "profileEmail": "Email",
+    "preferences": "Preferensi",
+    "language": "Bahasa",
+    "languageDescription": "Pilih bahasa antarmuka yang Anda sukai.",
+    "currency": "Mata Uang Tampilan",
+    "currencyDescription": "Pilih cara nilai moneter ditampilkan di seluruh aplikasi.",
+    "exchangeRate": "Kurs",
+    "exchangeRateDescription": "Timpa kurs otomatis. Kosongkan untuk menggunakan data langsung.",
+    "exchangeRateCurrent": "Kurs saat ini",
+    "exchangeRateAuto": "Otomatis (via Frankfurter)",
+    "exchangeRateOverride": "Timpa manual",
+    "exchangeRateReset": "Reset ke otomatis",
+    "exchangeRatePlaceholder": "mis. 16000",
+    "saved": "Pengaturan disimpan"
+  },
+  "errors": {
+    "loadFailed": "Gagal memuat data",
+    "networkError": "Terjadi kesalahan jaringan",
+    "saveFailed": "Gagal menyimpan perubahan",
+    "fxUnavailable": "Kurs tidak tersedia, menggunakan fallback",
+    "fxOverrideInvalid": "Nilai override harus angka positif"
+  },
+  "auth": {
+    "loginRequired": "Anda harus masuk untuk mengakses halaman ini"
+  }
+}

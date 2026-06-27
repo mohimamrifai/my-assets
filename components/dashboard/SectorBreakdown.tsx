@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart2, Bitcoin, Gem } from "lucide-react";
 import { useCurrency } from "@/components/providers/CurrencyProvider";
 import { formatCurrency, formatPercent } from "@/lib/formatters";
+import { useMounted } from "@/hooks/useMounted";
 
 interface SectorBreakdownProps {
   saham: { value: number; percent: number };
@@ -21,11 +21,7 @@ const COLORS = {
 
 export function SectorBreakdown({ saham, crypto, emas }: SectorBreakdownProps) {
   const { currency } = useCurrency();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const mounted = useMounted();
 
   const data = [
     { name: "Saham", value: saham.value, percent: saham.percent, color: COLORS.SAHAM, icon: BarChart2 },

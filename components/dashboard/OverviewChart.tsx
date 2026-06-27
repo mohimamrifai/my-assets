@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip, Legend } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useCurrency } from "@/components/providers/CurrencyProvider";
 import { formatCurrency } from "@/lib/formatters";
+import { useMounted } from "@/hooks/useMounted";
 
 interface ChartAsset {
   name?: string | null;
@@ -54,11 +55,7 @@ const CustomTooltipContent = ({ active, payload, label, currency }: { active?: b
 
 export function OverviewChart({ assets }: OverviewChartProps) {
   const { currency } = useCurrency();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const mounted = useMounted();
 
   const data = useMemo(() => {
     // 1. Kelompokkan aset berdasarkan nama agar tidak ada duplikasi di grafik
@@ -104,45 +101,47 @@ export function OverviewChart({ assets }: OverviewChartProps) {
       </CardHeader>
       <CardContent className="p-5">
         <div className="h-[300px] w-full min-h-[300px] relative">
-          {/* Tambahkan minHeight pada props ResponsiveContainer */}
-          <ResponsiveContainer width="100%" height="100%" minHeight={300} minWidth={1}>
-            <BarChart
-              data={data}
-              margin={{ top: 10, right: 10, left: 10, bottom: 0 }}
-              barGap={4}
-            >
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#2A2D3E" opacity={0.5} />
-              <XAxis
-                dataKey="name"
-                axisLine={false}
-                tickLine={false}
-                tick={{ fill: '#64748B', fontSize: 12 }}
-                dy={10}
-              />
-              <YAxis
-                hide
-              />
-              <Tooltip content={<CustomTooltipContent currency={currency} />} cursor={{ fill: '#2A2D3E', opacity: 0.2 }} />
-              <Legend
-                verticalAlign="top"
-                height={36}
-                iconType="circle"
-                wrapperStyle={{ fontSize: '12px', color: '#64748B' }}
-              />
-              <Bar
-                dataKey="Total Modal"
-                fill="#64748B"
-                radius={[4, 4, 0, 0]}
-                maxBarSize={40}
-              />
-              <Bar
-                dataKey="Nilai Terkini"
-                fill="#10B981"
-                radius={[4, 4, 0, 0]}
-                maxBarSize={40}
-              />
-            </BarChart>
-          </ResponsiveContainer>
+          {/* Render setelah mount agar parent sudah punya dimensi, menghindari warning width/height -1 dari recharts */}
+          {mounted && (
+            <ResponsiveContainer width="100%" height="100%" minHeight={300} minWidth={1}>
+              <BarChart
+                data={data}
+                margin={{ top: 10, right: 10, left: 10, bottom: 0 }}
+                barGap={4}
+              >
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#2A2D3E" opacity={0.5} />
+                <XAxis
+                  dataKey="name"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: '#64748B', fontSize: 12 }}
+                  dy={10}
+                />
+                <YAxis
+                  hide
+                />
+                <Tooltip content={<CustomTooltipContent currency={currency} />} cursor={{ fill: '#2A2D3E', opacity: 0.2 }} />
+                <Legend
+                  verticalAlign="top"
+                  height={36}
+                  iconType="circle"
+                  wrapperStyle={{ fontSize: '12px', color: '#64748B' }}
+                />
+                <Bar
+                  dataKey="Total Modal"
+                  fill="#64748B"
+                  radius={[4, 4, 0, 0]}
+                  maxBarSize={40}
+                />
+                <Bar
+                  dataKey="Nilai Terkini"
+                  fill="#10B981"
+                  radius={[4, 4, 0, 0]}
+                  maxBarSize={40}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          )}
         </div>
       </CardContent>
     </Card>

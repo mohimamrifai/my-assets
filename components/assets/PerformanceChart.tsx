@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip, ReferenceLine } from "recharts";
 import { format } from "date-fns";
 import { id as localeId } from "date-fns/locale";
@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Valuation } from "@/types";
 import { useCurrency } from "@/components/providers/CurrencyProvider";
 import { formatCurrency } from "@/lib/formatters";
+import { useMounted } from "@/hooks/useMounted";
 
 interface PerformanceChartProps {
   valuations: Valuation[];
@@ -31,11 +32,7 @@ const CustomTooltipContent = ({ active, payload, currency }: { active?: boolean,
 
 export function PerformanceChart({ valuations, totalModal }: PerformanceChartProps) {
   const { currency } = useCurrency();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const mounted = useMounted();
 
   const data = useMemo(() => {
     const sortedValuations = [...valuations].sort(

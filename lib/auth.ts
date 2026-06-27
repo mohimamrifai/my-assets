@@ -11,7 +11,16 @@ export const auth = betterAuth({
         type: "string",
         required: false,
         defaultValue: "IDR",
-      }
-    }
-  }
+      },
+      locale: {
+        type: "string",
+        required: false,
+        defaultValue: "en",
+      },
+      fxRateOverride: {
+        type: "number",
+        required: false,
+      },
+    },
+  },
 });
