@@ -6,7 +6,10 @@ interface FormatCurrencyOptions {
   stored?: CurrencyCode;
   display?: CurrencyCode;
   locale?: string;
+  rate?: number;
 }
+
+const FALLBACK_USD_TO_IDR = 15500;
 
 const dateLocaleMap = { en: enUS, id: idLocale } as const;
 
@@ -19,15 +22,22 @@ export function formatCurrency(
       ? { display: displayOrOptions }
       : displayOrOptions;
 
+  const stored = options.stored ?? "IDR";
   const display = options.display ?? "IDR";
   const locale = options.locale ?? "en";
+
+  let converted = value;
+  if (stored !== display) {
+    const rate = options.rate ?? FALLBACK_USD_TO_IDR;
+    converted = stored === "USD" ? value * rate : value / rate;
+  }
 
   return new Intl.NumberFormat(locale, {
     style: "currency",
     currency: display,
     minimumFractionDigits: display === "USD" ? 2 : 0,
     maximumFractionDigits: display === "USD" ? 2 : 0,
-  }).format(value);
+  }).format(converted);
 }
 
 export function formatPercent(value: number, locale = "en"): string {

@@ -15,7 +15,10 @@
     "previous": "Previous",
     "confirm": "Confirm",
     "reset": "Reset",
-    "actions": "Actions"
+    "actions": "Actions",
+    "retry": "Retry",
+    "viewAll": "View all",
+    "showing": "Showing {start}-{end} of {total}"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -57,5 +60,166 @@
   },
   "auth": {
     "loginRequired": "You must be signed in to access this page"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "subtitle": "Your portfolio at a glance",
+    "netWorth": "Net Worth",
+    "totalCapital": "Total Capital",
+    "totalReturn": "Total Return",
+    "percent": "Percent",
+    "gainLoss": "Gain / Loss",
+    "assetDetails": "Asset Details",
+    "globalTransactions": "Global Transaction History",
+    "noAssets": "No assets yet",
+    "noAssetsDescription": "Start tracking your portfolio by adding your first asset.",
+    "noTransactions": "No transactions in this period",
+    "loading": "Loading dashboard...",
+    "filter": {
+      "all": "All",
+      "investing": "Investing",
+      "trading": "Trading"
+    }
+  },
+  "assets": {
+    "title": "Assets",
+    "subtitle": "Manage all your assets in one place",
+    "newAsset": "New Asset",
+    "searchPlaceholder": "Search assets by name...",
+    "table": {
+      "name": "Name",
+      "type": "Type",
+      "platform": "Platform",
+      "capital": "Capital",
+      "current": "Current",
+      "gainLoss": "Gain / Loss",
+      "actions": "Actions",
+      "title": "Asset List",
+      "noResults": "No assets match your filters.",
+      "rowDetail": "Asset Detail",
+      "updateValue": "Update Valuation",
+      "sellAsset": "Sell Asset"
+    },
+    "empty": {
+      "title": "No assets yet",
+      "description": "Start tracking your portfolio by adding your first asset.",
+      "cta": "Add your first asset"
+    },
+    "detail": {
+      "currentValue": "Current Value",
+      "totalCapital": "Total Capital",
+      "buyPrice": "Buy Price",
+      "quantity": "Quantity",
+      "platform": "Platform",
+      "assetType": "Asset Type",
+      "buyDate": "Buy Date",
+      "recording": "Recording",
+      "recordingNominal": "Cash / Nominal",
+      "unitLot": "Lot",
+      "unitGram": "Gram",
+      "unitUnit": "Unit",
+      "valuationDate": "Date",
+      "valuationValue": "Value",
+      "valuationChange": "Change",
+      "valuationDelete": "Delete valuation",
+      "confirmDeleteValuation": "Delete this valuation?",
+      "tabs": {
+        "overview": "Overview",
+        "transactions": "Transactions"
+      },
+      "valuationHistory": "Valuation History",
+      "noValuations": "No valuation history in this period",
+      "valuationMovements": "Valuation Movements",
+      "untitled": "Untitled asset",
+      "actions": {
+        "deposit": "Deposit",
+        "sell": "Sell",
+        "withdraw": "Withdraw",
+        "update": "Update Value",
+        "delete": "Delete"
+      },
+      "delete": {
+        "title": "Delete this asset?",
+        "description": "This action cannot be undone. All valuation and transaction history for this asset will be permanently removed.",
+        "confirm": "Yes, delete",
+        "deleting": "Deleting...",
+        "cancel": "Cancel"
+      },
+      "toast": {
+        "deleted": "Asset deleted",
+        "deleteFailed": "Failed to delete asset",
+        "networkError": "Network error"
+      }
+    }
+  },
+  "filters": {
+    "all": "All",
+    "saham": "Stocks",
+    "crypto": "Crypto",
+    "emas": "Gold",
+    "reksaDana": "Mutual Funds",
+    "p2p": "P2P Lending",
+    "lainnya": "Other"
+  },
+  "transactions": {
+    "type": {
+      "BUY": "Buy",
+      "SELL": "Sell",
+      "DEPOSIT": "Deposit",
+      "WITHDRAWAL": "Withdrawal",
+      "UPDATE": "Update"
+    },
+    "date": "Date",
+    "amount": "Amount",
+    "quantity": "Quantity",
+    "price": "Price",
+    "notes": "Notes",
+    "noTransactions": "No transactions in this period",
+    "history": "History"
+  },
+  "forms": {
+    "assetName": "Asset Name",
+    "assetNamePlaceholder": "e.g. BBCA, Bitcoin, Antam 5g",
+    "type": "Asset Type",
+    "mode": "Mode",
+    "investing": "Investing",
+    "trading": "Trading",
+    "platform": "Platform",
+    "platformPlaceholder": "e.g. Stockbit, Indodax, Pegadaian",
+    "notes": "Notes",
+    "notesPlaceholder": "Optional notes",
+    "quantity": "Quantity",
+    "buyPrice": "Buy Price",
+    "initialCapital": "Initial Capital",
+    "buyDate": "Buy Date",
+    "isNominal": "Nominal / Cash only",
+    "currentValue": "Current Value",
+    "currentValuePlaceholder": "Latest market value",
+    "recordedAt": "Recorded At",
+    "sellQuantity": "Quantity to Sell",
+    "sellPrice": "Sell Price",
+    "transactionType": "Transaction Type",
+    "validation": {
+      "required": "This field is required",
+      "positive": "Must be a positive number"
+    }
+  },
+  "empty": {
+    "noData": "No data available",
+    "noResults": "No results found",
+    "loadingFailed": "Failed to load data",
+    "tryAgain": "Try again"
+  },
+  "assetTypes": {
+    "SAHAM": "Stocks",
+    "CRYPTO": "Crypto",
+    "EMAS": "Gold",
+    "REKSA_DANA": "Mutual Funds",
+    "P2P": "P2P",
+    "LAINNYA": "Other"
+  },
+  "assetModes": {
+    "INVESTING": "Investing",
+    "TRADING": "Trading"
   }
 }

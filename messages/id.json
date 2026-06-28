@@ -15,7 +15,10 @@
     "previous": "Sebelumnya",
     "confirm": "Konfirmasi",
     "reset": "Reset",
-    "actions": "Aksi"
+    "actions": "Aksi",
+    "retry": "Coba lagi",
+    "viewAll": "Lihat semua",
+    "showing": "Menampilkan {start}-{end} dari {total}"
   },
   "nav": {
     "dashboard": "Dasbor",
@@ -57,5 +60,166 @@
   },
   "auth": {
     "loginRequired": "Anda harus masuk untuk mengakses halaman ini"
+  },
+  "dashboard": {
+    "title": "Dasbor",
+    "subtitle": "Portofolio Anda sekilas",
+    "netWorth": "Total Kekayaan",
+    "totalCapital": "Total Modal",
+    "totalReturn": "Total Return",
+    "percent": "Persentase",
+    "gainLoss": "Untung / Rugi",
+    "assetDetails": "Rincian Aset",
+    "globalTransactions": "Riwayat Transaksi Global",
+    "noAssets": "Belum ada aset",
+    "noAssetsDescription": "Mulai lacak portofolio Anda dengan menambahkan aset pertama.",
+    "noTransactions": "Tidak ada transaksi pada periode ini",
+    "loading": "Memuat dasbor...",
+    "filter": {
+      "all": "Semua",
+      "investing": "Investasi",
+      "trading": "Trading"
+    }
+  },
+  "assets": {
+    "title": "Aset",
+    "subtitle": "Kelola semua aset Anda di satu tempat",
+    "newAsset": "Aset Baru",
+    "searchPlaceholder": "Cari aset berdasarkan nama...",
+    "table": {
+      "name": "Nama",
+      "type": "Tipe",
+      "platform": "Platform",
+      "capital": "Modal",
+      "current": "Terkini",
+      "gainLoss": "Untung / Rugi",
+      "actions": "Aksi",
+      "title": "Daftar Aset",
+      "noResults": "Tidak ada aset yang cocok dengan filter Anda.",
+      "rowDetail": "Detail Aset",
+      "updateValue": "Update Valuasi",
+      "sellAsset": "Jual Aset"
+    },
+    "empty": {
+      "title": "Belum ada aset",
+      "description": "Mulai lacak portofolio Anda dengan menambahkan aset pertama.",
+      "cta": "Tambah aset pertama"
+    },
+    "detail": {
+      "currentValue": "Nilai Terkini",
+      "totalCapital": "Total Modal",
+      "buyPrice": "Harga Beli",
+      "quantity": "Kuantitas",
+      "platform": "Platform",
+      "assetType": "Tipe Aset",
+      "buyDate": "Tanggal Beli",
+      "recording": "Pencatatan",
+      "recordingNominal": "Nominal / Kas",
+      "unitLot": "Lot",
+      "unitGram": "Gram",
+      "unitUnit": "Unit",
+      "valuationDate": "Tanggal",
+      "valuationValue": "Nilai",
+      "valuationChange": "Perubahan",
+      "valuationDelete": "Hapus valuasi",
+      "confirmDeleteValuation": "Hapus valuasi ini?",
+      "tabs": {
+        "overview": "Ringkasan",
+        "transactions": "Transaksi"
+      },
+      "valuationHistory": "Histori Valuasi",
+      "noValuations": "Belum ada histori valuasi pada periode ini",
+      "valuationMovements": "Pergerakan Valuasi",
+      "untitled": "Aset Tanpa Nama",
+      "actions": {
+        "deposit": "Deposit",
+        "sell": "Jual",
+        "withdraw": "Tarik",
+        "update": "Update Nilai",
+        "delete": "Hapus"
+      },
+      "delete": {
+        "title": "Hapus aset ini?",
+        "description": "Tindakan ini tidak dapat dibatalkan. Semua data valuasi dan riwayat transaksi untuk aset ini akan dihapus secara permanen.",
+        "confirm": "Ya, hapus",
+        "deleting": "Menghapus...",
+        "cancel": "Batal"
+      },
+      "toast": {
+        "deleted": "Aset berhasil dihapus",
+        "deleteFailed": "Gagal menghapus aset",
+        "networkError": "Terjadi kesalahan jaringan"
+      }
+    }
+  },
+  "filters": {
+    "all": "Semua",
+    "saham": "Saham",
+    "crypto": "Kripto",
+    "emas": "Emas",
+    "reksaDana": "Reksa Dana",
+    "p2p": "P2P Lending",
+    "lainnya": "Lainnya"
+  },
+  "transactions": {
+    "type": {
+      "BUY": "Beli",
+      "SELL": "Jual",
+      "DEPOSIT": "Setor",
+      "WITHDRAWAL": "Tarik",
+      "UPDATE": "Update"
+    },
+    "date": "Tanggal",
+    "amount": "Jumlah",
+    "quantity": "Kuantitas",
+    "price": "Harga",
+    "notes": "Catatan",
+    "noTransactions": "Tidak ada transaksi pada periode ini",
+    "history": "Riwayat"
+  },
+  "forms": {
+    "assetName": "Nama Aset",
+    "assetNamePlaceholder": "mis. BBCA, Bitcoin, Antam 5g",
+    "type": "Tipe Aset",
+    "mode": "Mode",
+    "investing": "Investasi",
+    "trading": "Trading",
+    "platform": "Platform",
+    "platformPlaceholder": "mis. Stockbit, Indodax, Pegadaian",
+    "notes": "Catatan",
+    "notesPlaceholder": "Catatan opsional",
+    "quantity": "Kuantitas",
+    "buyPrice": "Harga Beli",
+    "initialCapital": "Modal Awal",
+    "buyDate": "Tanggal Beli",
+    "isNominal": "Nominal / Kas saja",
+    "currentValue": "Nilai Terkini",
+    "currentValuePlaceholder": "Nilai pasar terbaru",
+    "recordedAt": "Dicatat Pada",
+    "sellQuantity": "Kuantitas Dijual",
+    "sellPrice": "Harga Jual",
+    "transactionType": "Tipe Transaksi",
+    "validation": {
+      "required": "Field ini wajib diisi",
+      "positive": "Harus angka positif"
+    }
+  },
+  "empty": {
+    "noData": "Tidak ada data",
+    "noResults": "Tidak ada hasil ditemukan",
+    "loadingFailed": "Gagal memuat data",
+    "tryAgain": "Coba lagi"
+  },
+  "assetTypes": {
+    "SAHAM": "Saham",
+    "CRYPTO": "Kripto",
+    "EMAS": "Emas",
+    "REKSA_DANA": "Reksa Dana",
+    "P2P": "P2P",
+    "LAINNYA": "Lainnya"
+  },
+  "assetModes": {
+    "INVESTING": "Investasi",
+    "TRADING": "Trading"
   }
 }

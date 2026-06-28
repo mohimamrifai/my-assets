@@ -29,7 +29,7 @@ export function TransactionTable({ transactions, assetName, onTransactionDeleted
   const [selectedTx, setSelectedTx] = useState<Transaction | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const { currency } = useCurrency();
+  const { currency, fxRate } = useCurrency();
   const router = useRouter();
 
   const handleDelete = async () => {
@@ -119,7 +119,7 @@ export function TransactionTable({ transactions, assetName, onTransactionDeleted
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right py-3 font-medium text-sm text-foreground">
-                    {formatCurrency(trx.amount, currency)}
+                    {formatCurrency(trx.amount, { display: currency, rate: fxRate })}
                   </TableCell>
                     <TableCell className="text-sm py-3 text-muted-foreground">
                       {trx.fundSource || "-"}
@@ -160,7 +160,7 @@ export function TransactionTable({ transactions, assetName, onTransactionDeleted
               <Separator />
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">Nominal</span>
-                <span className="font-bold text-lg">{formatCurrency(selectedTx.amount, currency)}</span>
+                <span className="font-bold text-lg">{formatCurrency(selectedTx.amount, { display: currency, rate: fxRate })}</span>
               </div>
               <Separator />
               
@@ -188,7 +188,7 @@ export function TransactionTable({ transactions, assetName, onTransactionDeleted
                 <>
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-muted-foreground">Harga Satuan</span>
-                    <span className="font-medium">{formatCurrency(selectedTx.price, currency)}</span>
+                    <span className="font-medium">{formatCurrency(selectedTx.price, { display: currency, rate: fxRate })}</span>
                   </div>
                   <Separator />
                 </>
@@ -199,7 +199,7 @@ export function TransactionTable({ transactions, assetName, onTransactionDeleted
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-muted-foreground">Realized Gain/Loss</span>
                     <span className={`font-bold ${selectedTx.realizedGain > 0 ? "text-emerald-500" : selectedTx.realizedGain < 0 ? "text-red-500" : ""}`}>
-                      {selectedTx.realizedGain > 0 ? "+" : ""}{formatCurrency(selectedTx.realizedGain, currency)}
+                      {selectedTx.realizedGain > 0 ? "+" : ""}{formatCurrency(selectedTx.realizedGain, { display: currency, rate: fxRate })}
                     </span>
                   </div>
                   <Separator />

@@ -38,7 +38,7 @@ export default function SellAssetPage({ params }: { params: Promise<{ id: string
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { currency } = useCurrency();
+  const { currency, fxRate } = useCurrency();
   const [sellAll, setSellAll] = useState(false);
   const [sellPrice, setSellPrice] = useState<number | undefined>(undefined);
   const [quantitySold, setQuantitySold] = useState<number | undefined>(undefined);
@@ -180,7 +180,7 @@ export default function SellAssetPage({ params }: { params: Promise<{ id: string
             <div className="p-4 rounded-lg bg-muted/30 border border-border flex flex-col gap-3 mb-6">
               <div className="flex justify-between items-center text-sm">
                 <span className="text-muted-foreground">Nilai Terkini Estimasi:</span>
-                <span className="font-medium text-foreground">{formatCurrency(latestValuation, currency)}</span>
+                <span className="font-medium text-foreground">{formatCurrency(latestValuation, { display: currency, rate: fxRate })}</span>
               </div>
               {!asset.isNominal && (
                 <div className="flex justify-between items-center text-sm">
@@ -239,12 +239,12 @@ export default function SellAssetPage({ params }: { params: Promise<{ id: string
                 </div>
                 <div className="flex justify-between items-center text-sm">
                   <span className="text-muted-foreground">Harga Jual:</span>
-                  <span className="font-medium text-foreground">{formatCurrency(sellPrice || 0, currency)}</span>
+                  <span className="font-medium text-foreground">{formatCurrency(sellPrice || 0, { display: currency, rate: fxRate })}</span>
                 </div>
                 <div className="flex justify-between items-center text-sm pt-2 border-t border-emerald-500/15">
                   <span className="font-medium text-foreground">Nominal Penerimaan:</span>
                   <span className="text-lg font-bold text-emerald-600">
-                    {formatCurrency(calculatedAmount || 0, currency)}
+                    {formatCurrency(calculatedAmount || 0, { display: currency, rate: fxRate })}
                   </span>
                 </div>
                 <div className="flex justify-between items-center text-sm">
@@ -253,7 +253,7 @@ export default function SellAssetPage({ params }: { params: Promise<{ id: string
                     "font-bold",
                     estimatedRealizedGain > 0 ? "text-emerald-600" : estimatedRealizedGain < 0 ? "text-red-500" : "text-foreground"
                   )}>
-                    {estimatedRealizedGain > 0 ? "+" : ""}{formatCurrency(estimatedRealizedGain, currency)}
+                    {estimatedRealizedGain > 0 ? "+" : ""}{formatCurrency(estimatedRealizedGain, { display: currency, rate: fxRate })}
                   </span>
                 </div>
               </div>

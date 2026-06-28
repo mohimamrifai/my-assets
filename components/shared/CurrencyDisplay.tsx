@@ -10,10 +10,10 @@ interface CurrencyDisplayProps {
 }
 
 export function CurrencyDisplay({ value, className }: CurrencyDisplayProps) {
-  const { currency } = useCurrency();
+  const { currency, fxRate } = useCurrency();
   return (
     <span className={cn("tabular-nums", className)}>
-      {formatCurrency(value, currency)}
+      {formatCurrency(value, { display: currency, rate: fxRate })}
     </span>
   );
 }

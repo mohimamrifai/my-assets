@@ -51,7 +51,7 @@ export default function EditValuationPage({ params }: { params: Promise<{ id: st
   });
 
   const { watch, reset } = form;
-  const { currency } = useCurrency();
+  const { currency, fxRate } = useCurrency();
   // eslint-disable-next-line react-hooks/incompatible-library
   const currentValueInput = Number(watch("value")) || 0;
 
@@ -138,21 +138,21 @@ export default function EditValuationPage({ params }: { params: Promise<{ id: st
     if (asset.isNominal) {
       inputLabel = `Nilai Total Saat Ini (${currency === "USD" ? "$" : "Rp"})`;
       calculatedTotal = currentValueInput;
-      previewText = `Nilai Total = ${formatCurrency(calculatedTotal, currency)}`;
+      previewText = `Nilai Total = ${formatCurrency(calculatedTotal, { display: currency, rate: fxRate })}`;
     } else {
       const qty = asset.quantity || 0;
       if (asset.type === "SAHAM") {
         inputLabel = `Harga per Lembar Saat Ini (${currency === "USD" ? "$" : "Rp"})`;
         calculatedTotal = qty * 100 * currentValueInput;
-        previewText = `Nilai Total = ${qty} lot × 100 × ${formatCurrency(currentValueInput, currency)} = ${formatCurrency(calculatedTotal, currency)}`;
+        previewText = `Nilai Total = ${qty} lot × 100 × ${formatCurrency(currentValueInput, { display: currency, rate: fxRate })} = ${formatCurrency(calculatedTotal, { display: currency, rate: fxRate })}`;
       } else if (asset.type === "CRYPTO") {
         inputLabel = `Harga per Unit Saat Ini (${currency === "USD" ? "$" : "Rp"})`;
         calculatedTotal = qty * currentValueInput;
-        previewText = `Nilai Total = ${qty} unit × ${formatCurrency(currentValueInput, currency)} = ${formatCurrency(calculatedTotal, currency)}`;
+        previewText = `Nilai Total = ${qty} unit × ${formatCurrency(currentValueInput, { display: currency, rate: fxRate })} = ${formatCurrency(calculatedTotal, { display: currency, rate: fxRate })}`;
       } else if (asset.type === "EMAS") {
         inputLabel = `Harga per Gram Saat Ini (${currency === "USD" ? "$" : "Rp"})`;
         calculatedTotal = qty * currentValueInput;
-        previewText = `Nilai Total = ${qty} gram × ${formatCurrency(currentValueInput, currency)} = ${formatCurrency(calculatedTotal, currency)}`;
+        previewText = `Nilai Total = ${qty} gram × ${formatCurrency(currentValueInput, { display: currency, rate: fxRate })} = ${formatCurrency(calculatedTotal, { display: currency, rate: fxRate })}`;
       }
     }
   } else {
@@ -205,7 +205,7 @@ export default function EditValuationPage({ params }: { params: Promise<{ id: st
                   <div className="mt-2 pt-2 border-t border-primary/10 flex justify-between items-center">
                     <span className="font-semibold">Nilai Portofolio Baru:</span>
                     <span className="text-lg font-bold text-primary">
-                      {formatCurrency(calculatedTotal, currency)}
+                      {formatCurrency(calculatedTotal, { display: currency, rate: fxRate })}
                     </span>
                   </div>
                 </div>

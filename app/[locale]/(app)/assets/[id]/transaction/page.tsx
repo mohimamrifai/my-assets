@@ -63,7 +63,7 @@ function TransactionForm({ params }: { params: Promise<{ id: string }> }) {
   });
 
   const { watch } = form;
-  const { currency } = useCurrency();
+  const { currency, fxRate } = useCurrency();
   // eslint-disable-next-line react-hooks/incompatible-library
   const currentAmount = watch("amount") || 0;
 
@@ -211,11 +211,11 @@ function TransactionForm({ params }: { params: Promise<{ id: string }> }) {
               <div className="p-4 rounded-lg bg-muted/30 border border-border flex flex-col gap-3">
                 <div className="flex justify-between items-center text-sm">
                   <span className="text-muted-foreground">Saldo Saat Ini:</span>
-                  <span className="font-medium">{formatCurrency(latestValuation, currency)}</span>
+                  <span className="font-medium">{formatCurrency(latestValuation, { display: currency, rate: fxRate })}</span>
                 </div>
                 <div className="flex justify-between items-center text-sm border-b border-border pb-3">
                   <span className="text-muted-foreground">Modal Awal Saat Ini:</span>
-                  <span className="font-medium">{formatCurrency(currentCapital, currency)}</span>
+                  <span className="font-medium">{formatCurrency(currentCapital, { display: currency, rate: fxRate })}</span>
                 </div>
                 <div className="flex justify-between items-center text-sm pt-1">
                   <span className="font-medium">Estimasi Saldo Baru:</span>
@@ -223,7 +223,7 @@ function TransactionForm({ params }: { params: Promise<{ id: string }> }) {
                     "font-bold",
                     isInsufficient ? "text-destructive" : "text-orange-600"
                   )}>
-                    {formatCurrency(newValuationValue, currency)}
+                    {formatCurrency(newValuationValue, { display: currency, rate: fxRate })}
                   </span>
                 </div>
                 <div className="flex justify-between items-center text-sm">
@@ -232,14 +232,14 @@ function TransactionForm({ params }: { params: Promise<{ id: string }> }) {
                     "font-bold",
                     isInsufficient ? "text-destructive" : "text-orange-600"
                   )}>
-                    {formatCurrency(newCapital, currency)}
+                    {formatCurrency(newCapital, { display: currency, rate: fxRate })}
                   </span>
                 </div>
                 {realizedGainPred > 0 && (
                   <div className="flex justify-between items-center text-sm border-t border-border pt-2 mt-1">
                     <span className="font-medium text-emerald-600">Pemotongan Profit (Realized Gain):</span>
                     <span className="font-bold text-emerald-600">
-                      +{formatCurrency(realizedGainPred, currency)}
+                      +{formatCurrency(realizedGainPred, { display: currency, rate: fxRate })}
                     </span>
                   </div>
                 )}

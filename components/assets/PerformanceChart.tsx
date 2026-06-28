@@ -16,13 +16,13 @@ interface PerformanceChartProps {
   totalModal: number;
 }
 
-const CustomTooltipContent = ({ active, payload, currency }: { active?: boolean, payload?: { payload: { fullDate: string }, value: number }[], label?: string, currency: "IDR" | "USD" }) => {
+const CustomTooltipContent = ({ active, payload, currency, fxRate }: { active?: boolean, payload?: { payload: { fullDate: string }, value: number }[], label?: string, currency: "IDR" | "USD", fxRate: number }) => {
   if (active && payload && payload.length) {
     return (
       <div className="bg-card border border-border/50 p-4 rounded-md shadow-xl">
         <p className="text-xs uppercase tracking-wider font-semibold text-muted-foreground mb-1">{payload[0].payload.fullDate}</p>
         <p className="text-xl font-bold text-foreground tabular-nums">
-          {formatCurrency(payload[0].value, currency)}
+          {formatCurrency(payload[0].value, { display: currency, rate: fxRate })}
         </p>
       </div>
     );
@@ -31,7 +31,7 @@ const CustomTooltipContent = ({ active, payload, currency }: { active?: boolean,
 };
 
 export function PerformanceChart({ valuations, totalModal }: PerformanceChartProps) {
-  const { currency } = useCurrency();
+  const { currency, fxRate } = useCurrency();
   const mounted = useMounted();
 
   const data = useMemo(() => {
@@ -81,10 +81,6 @@ export function PerformanceChart({ valuations, totalModal }: PerformanceChartPro
 
   return (
     <div className="bg-card border border-border/50 shadow-sm rounded-lg overflow-hidden pt-4 pb-2 relative">
-      {/* Label Debugging */}
-      <div className="absolute top-2 left-2 text-[10px] text-muted-foreground opacity-50 z-50">
-        Points: {data.length} | Range: {range.toLocaleString()}
-      </div>
       <div className="h-[300px] w-full min-h-[300px] relative">
         {/* Render setelah mount agar parent sudah punya dimensi, menghindari warning width/height -1 dari recharts */}
         {mounted && (
@@ -111,7 +107,7 @@ export function PerformanceChart({ valuations, totalModal }: PerformanceChartPro
                 hide
                 domain={[minVal - padding, maxVal + padding]}
               />
-              <Tooltip content={<CustomTooltipContent currency={currency} />} />
+              <Tooltip content={<CustomTooltipContent currency={currency} fxRate={fxRate} />} />
               <ReferenceLine
                 y={totalModal}
                 stroke="var(--muted-foreground)"

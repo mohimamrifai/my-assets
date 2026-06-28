@@ -20,7 +20,7 @@ const COLORS = {
 };
 
 export function SectorBreakdown({ saham, crypto, emas }: SectorBreakdownProps) {
-  const { currency } = useCurrency();
+  const { currency, fxRate } = useCurrency();
   const mounted = useMounted();
 
   const data = [
@@ -76,7 +76,7 @@ export function SectorBreakdown({ saham, crypto, emas }: SectorBreakdownProps) {
                       <div className="bg-[#1A1D2E] border border-[#2A2D3E] p-3 rounded-lg shadow-xl">
                         <p className="text-sm font-medium text-muted-foreground mb-1">{data.name}</p>
                         <p className="text-xl font-bold text-[#F1F5F9] tabular-nums">
-                          {formatCurrency(data.value, currency)}
+                          {formatCurrency(data.value, { display: currency, rate: fxRate })}
                         </p>
                         <p className="text-sm font-medium text-muted-foreground mt-1">{formatPercent(data.percent)}</p>
                       </div>
@@ -105,7 +105,7 @@ export function SectorBreakdown({ saham, crypto, emas }: SectorBreakdownProps) {
                   <span className="font-medium text-foreground">{item.name}</span>
                 </div>
                 <div className="flex flex-col items-end">
-                  <span className="font-medium tabular-nums">{formatCurrency(item.value, currency)}</span>
+                  <span className="font-medium tabular-nums">{formatCurrency(item.value, { display: currency, rate: fxRate })}</span>
                   <span className="text-xs text-muted-foreground tabular-nums">{formatPercent(item.percent)}</span>
                 </div>
               </div>

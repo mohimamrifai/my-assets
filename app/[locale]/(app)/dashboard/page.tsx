@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { NetWorthCard } from "@/components/dashboard/NetWorthCard";
 import { GainLossCard } from "@/components/dashboard/GainLossCard";
@@ -16,8 +17,11 @@ import Link from "next/link";
 import { toast } from "sonner";
 import { HistoryFilter, TimeFilter, filterByTime } from "@/components/shared/HistoryFilter";
 import { TransactionTable } from "@/components/assets/TransactionTable";
+import { EmptyState } from "@/components/shared/EmptyState";
 
 export default function DashboardPage() {
+  const t = useTranslations("dashboard");
+  const tErrors = useTranslations("errors");
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<FilterMode>("SEMUA");
@@ -31,54 +35,25 @@ export default function DashboardPage() {
       if (json.success) {
         setData(json.data);
       } else {
-        toast.error("Gagal memuat data dashboard");
+        toast.error(tErrors("loadFailed"));
       }
-    } catch (error) {
-      console.error("Error fetching dashboard:", error);
-      toast.error("Terjadi kesalahan jaringan");
+    } catch {
+      toast.error(tErrors("networkError"));
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    let mounted = true;
-
-    const loadData = async () => {
-      try {
-        setLoading(true);
-        const res = await fetch("/api/dashboard");
-        const json = await res.json();
-        if (mounted) {
-          if (json.success) {
-            setData(json.data);
-          } else {
-            toast.error("Gagal memuat data dashboard");
-          }
-        }
-      } catch (error) {
-        console.error("Error fetching dashboard:", error);
-        if (mounted) {
-          toast.error("Terjadi kesalahan jaringan");
-        }
-      } finally {
-        if (mounted) {
-          setLoading(false);
-        }
-      }
-    };
-
-    loadData();
-
-    return () => {
-      mounted = false;
-    };
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchDashboardData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (loading || !data) {
     return (
       <div className="space-y-6">
-        <PageHeader title="Dashboard" subtitle="Ringkasan portofolio aset Anda" />
+        <PageHeader title={t("title")} subtitle={t("subtitle")} />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Skeleton className="h-[140px] w-full" />
           <Skeleton className="h-[140px] w-full" />
@@ -89,90 +64,110 @@ export default function DashboardPage() {
     );
   }
 
-  // Derive display values based on filter
-  const displayNetWorth = 
+  const displayNetWorth =
     filter === "SEMUA" ? data.netWorth :
     filter === "INVESTING" ? data.byMode.investing.netWorth :
     data.byMode.trading.netWorth;
 
-  const displayTotalModal = 
+  const displayTotalModal =
     filter === "SEMUA" ? data.totalCapital :
     filter === "INVESTING" ? data.byMode.investing.totalModal :
     data.byMode.trading.totalModal;
 
-  const displayGainLossNominal = 
+  const displayGainLossNominal =
     filter === "SEMUA" ? data.totalGainLossNominal :
     filter === "INVESTING" ? data.byMode.investing.gainLoss.nominal :
     data.byMode.trading.gainLoss.nominal;
 
-  const displayGainLossPercent = 
+  const displayGainLossPercent =
     filter === "SEMUA" ? data.totalGainLossPercent :
     filter === "INVESTING" ? data.byMode.investing.gainLoss.percent :
     data.byMode.trading.gainLoss.percent;
 
-  const displayAssets = data.assets.filter(asset => {
+  const displayAssets = data.assets.filter((asset) => {
     if (filter === "SEMUA") return true;
     return asset.mode === filter;
   });
 
   const filteredTransactions = filterByTime(
-    data.allTransactions || [], 
-    timeFilter, 
-    (t) => t.date
-  ).filter(t => {
+    data.allTransactions || [],
+    timeFilter,
+    (tx) => tx.date,
+  ).filter((tx) => {
     if (filter === "SEMUA") return true;
-    const relatedAsset = data.assets.find(a => a.id === t.assetId);
+    const relatedAsset = data.assets.find((a) => a.id === tx.assetId);
     return relatedAsset?.mode === filter;
   });
 
   return (
     <div className="space-y-6 pb-12">
-      <PageHeader title="Dashboard" subtitle="Ringkasan portofolio aset Anda">
+      <PageHeader title={t("title")} subtitle={t("subtitle")}>
         <Button variant="outline" size="icon" onClick={fetchDashboardData} disabled={loading}>
-          <RefreshCw size={18} className={loading ? "animate-spin" : ""} />
+          <RefreshCw size={16} className={loading ? "animate-spin" : ""} />
         </Button>
         <Button asChild>
           <Link href="/assets/new">
-            <PlusCircle size={18} className="mr-2" />
-            Tambah Aset
+            <PlusCircle size={16} className="mr-2" />
+            {t("assetDetails")}
           </Link>
         </Button>
       </PageHeader>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 flex flex-col gap-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 items-start content-start">
-            <NetWorthCard netWorth={displayNetWorth} totalModal={displayTotalModal} />
-            <GainLossCard nominal={displayGainLossNominal} percent={displayGainLossPercent} />
+      {data.assets.length === 0 ? (
+        <EmptyState
+          title={t("noAssets")}
+          description={t("noAssetsDescription")}
+          action={{
+            label: t("assetDetails"),
+            href: "/assets/new",
+          }}
+        />
+      ) : (
+        <>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2 flex flex-col gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <NetWorthCard netWorth={displayNetWorth} totalModal={displayTotalModal} />
+                <GainLossCard nominal={displayGainLossNominal} percent={displayGainLossPercent} />
+              </div>
+              <OverviewChart assets={displayAssets} />
+            </div>
+            <div className="lg:col-span-1">
+              <SectorBreakdown
+                saham={data.bySector.SAHAM}
+                crypto={data.bySector.CRYPTO}
+                emas={data.bySector.EMAS}
+              />
+            </div>
           </div>
-          <OverviewChart assets={displayAssets} />
-        </div>
-        <div className="lg:col-span-1">
-          <SectorBreakdown 
-            saham={data.bySector.SAHAM}
-            crypto={data.bySector.CRYPTO}
-            emas={data.bySector.EMAS}
-          />
-        </div>
-      </div>
 
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold tracking-tight">Rincian Aset</h2>
-          <FilterTabs value={filter} onChange={setFilter} />
-        </div>
-        <AssetTable assets={displayAssets} />
-      </div>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-base font-medium text-muted-foreground uppercase tracking-wider">
+                {t("assetDetails")}
+              </h2>
+              <FilterTabs value={filter} onChange={setFilter} />
+            </div>
+            <AssetTable assets={displayAssets} />
+          </div>
 
-      <div className="space-y-4 pt-4 border-t border-border/50">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold tracking-tight">Riwayat Transaksi Global</h2>
-          <HistoryFilter value={timeFilter} onChange={setTimeFilter} />
-        </div>
-        <div className="h-[400px]">
-          <TransactionTable transactions={filteredTransactions} assetName="Global" onTransactionDeleted={fetchDashboardData} />
-        </div>
-      </div>
+          <div className="space-y-4 pt-4 border-t border-border">
+            <div className="flex items-center justify-between">
+              <h2 className="text-base font-medium text-muted-foreground uppercase tracking-wider">
+                {t("globalTransactions")}
+              </h2>
+              <HistoryFilter value={timeFilter} onChange={setTimeFilter} />
+            </div>
+            <div className="h-[400px]">
+              <TransactionTable
+                transactions={filteredTransactions}
+                assetName="Global"
+                onTransactionDeleted={fetchDashboardData}
+              />
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }

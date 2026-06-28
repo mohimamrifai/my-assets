@@ -31,7 +31,7 @@ interface TooltipPayload {
   value: number;
 }
 
-const CustomTooltipContent = ({ active, payload, label, currency }: { active?: boolean, payload?: TooltipPayload[], label?: string, currency: "IDR" | "USD" }) => {
+const CustomTooltipContent = ({ active, payload, label, currency, fxRate }: { active?: boolean, payload?: TooltipPayload[], label?: string, currency: "IDR" | "USD", fxRate: number }) => {
   if (active && payload && payload.length) {
     return (
       <div className="bg-[#1A1D2E] border border-[#2A2D3E] p-3 rounded-lg shadow-xl min-w-[200px]">
@@ -43,7 +43,7 @@ const CustomTooltipContent = ({ active, payload, label, currency }: { active?: b
               <span className="text-[#F1F5F9]">{entry.name}</span>
             </div>
             <span className="font-bold text-[#F1F5F9] tabular-nums">
-              {formatCurrency(entry.value, currency)}
+              {formatCurrency(entry.value, { display: currency, rate: fxRate })}
             </span>
           </div>
         ))}
@@ -54,7 +54,7 @@ const CustomTooltipContent = ({ active, payload, label, currency }: { active?: b
 };
 
 export function OverviewChart({ assets }: OverviewChartProps) {
-  const { currency } = useCurrency();
+  const { currency, fxRate } = useCurrency();
   const mounted = useMounted();
 
   const data = useMemo(() => {
@@ -120,7 +120,7 @@ export function OverviewChart({ assets }: OverviewChartProps) {
                 <YAxis
                   hide
                 />
-                <Tooltip content={<CustomTooltipContent currency={currency} />} cursor={{ fill: '#2A2D3E', opacity: 0.2 }} />
+                <Tooltip content={<CustomTooltipContent currency={currency} fxRate={fxRate} />} cursor={{ fill: '#2A2D3E', opacity: 0.2 }} />
                 <Legend
                   verticalAlign="top"
                   height={36}

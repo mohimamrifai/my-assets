@@ -15,26 +15,26 @@ interface GainLossBadgeProps {
   variant?: "badge" | "text";
 }
 
-export function GainLossBadge({ 
-  nominal, 
-  percent, 
+export function GainLossBadge({
+  nominal,
+  percent,
   className,
   showNominal = true,
   showPercent = true,
   variant = "badge"
 }: GainLossBadgeProps) {
-  const { currency } = useCurrency();
+  const { currency, fxRate } = useCurrency();
   const isPositive = nominal >= 0;
-  
+
   const content = (
     <>
       {isPositive ? (
-        <TrendingUp size={16} data-icon="inline-start" className="mr-1" aria-hidden="true" />
+        <TrendingUp size={16} className="mr-1" aria-hidden="true" />
       ) : (
-        <TrendingDown size={16} data-icon="inline-start" className="mr-1" aria-hidden="true" />
+        <TrendingDown size={16} className="mr-1" aria-hidden="true" />
       )}
-      <span>
-        {showNominal && formatCurrency(Math.abs(nominal), currency)}
+      <span className="tabular-nums">
+        {showNominal && formatCurrency(Math.abs(nominal), { display: currency, rate: fxRate })}
         {showNominal && showPercent && " ("}
         {showPercent && formatPercent(percent)}
         {showNominal && showPercent && ")"}
@@ -44,24 +44,26 @@ export function GainLossBadge({
 
   if (variant === "text") {
     return (
-      <div className={cn(
-        "flex items-center font-medium",
-        isPositive ? "text-[#22C55E]" : "text-[#EF4444]",
-        className
-      )}>
+      <div
+        className={cn(
+          "flex items-center font-medium",
+          isPositive ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400",
+          className
+        )}
+      >
         {content}
       </div>
     );
   }
 
   return (
-    <Badge 
-      variant="outline" 
+    <Badge
+      variant="outline"
       className={cn(
         "font-medium border-transparent",
-        isPositive 
-          ? "bg-[#22C55E]/10 text-[#22C55E]" 
-          : "bg-[#EF4444]/10 text-[#EF4444]",
+        isPositive
+          ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+          : "bg-red-500/10 text-red-600 dark:text-red-400",
         className
       )}
     >

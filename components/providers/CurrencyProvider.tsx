@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useCallback, useState } from "react";
+import React, { createContext, useContext, useCallback, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 import { useLocale } from "next-intl";
@@ -16,10 +16,13 @@ interface UserPreferences {
 interface CurrencyContextType extends UserPreferences {
   locale: LocaleCode;
   isLoading: boolean;
+  fxRate: number;
   setCurrency: (currency: CurrencyCode) => Promise<void>;
   setFxRateOverride: (rate: number | null) => Promise<void>;
   setLocale: (locale: LocaleCode) => Promise<void>;
 }
+
+const FALLBACK_USD_TO_IDR = 15500;
 
 const CurrencyContext = createContext<CurrencyContextType | undefined>(undefined);
 
@@ -35,6 +38,29 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
   const [fxRateOverride, setFxRateOverrideState] = useState<number | null>(() => {
     return ((data?.user as { fxRateOverride?: number | null } | undefined)?.fxRateOverride) ?? null;
   });
+  const [fetchedRate, setFetchedRate] = useState<number>(FALLBACK_USD_TO_IDR);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/fx-rate");
+        if (!res.ok) return;
+        const json = await res.json();
+        const rate = typeof json.rate === "number" && json.rate > 0 ? json.rate : null;
+        if (!cancelled && rate !== null) {
+          setFetchedRate(rate);
+        }
+      } catch {
+        // Silently keep fallback
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const fxRate = fxRateOverride ?? fetchedRate;
 
   const persist = useCallback(
     async (payload: Partial<UserPreferences> & { locale?: LocaleCode }) => {
@@ -94,6 +120,7 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
       value={{
         currency,
         fxRateOverride,
+        fxRate,
         locale: intlLocale,
         isLoading: isPending,
         setCurrency,

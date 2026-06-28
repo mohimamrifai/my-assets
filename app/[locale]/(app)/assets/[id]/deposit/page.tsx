@@ -31,7 +31,7 @@ interface ExtendedAsset extends Asset {
 export default function AssetDepositPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
   const router = useRouter();
-  const { currency } = useCurrency();
+  const { currency, fxRate } = useCurrency();
 
   const [asset, setAsset] = useState<ExtendedAsset | null>(null);
   const [loading, setLoading] = useState(true);
@@ -183,11 +183,11 @@ export default function AssetDepositPage({ params }: { params: Promise<{ id: str
             <div className="p-4 rounded-lg bg-muted/30 border border-border flex flex-col gap-3">
               <div className="flex justify-between items-center text-sm">
                 <span className="text-muted-foreground">Nilai / Saldo Saat Ini:</span>
-                <span className="font-medium">{formatCurrency(latestValuation, currency)}</span>
+                <span className="font-medium">{formatCurrency(latestValuation, { display: currency, rate: fxRate })}</span>
               </div>
               <div className="flex justify-between items-center text-sm">
                 <span className="font-medium">Estimasi Nilai Setelah Deposit:</span>
-                <span className="font-bold text-blue-600">{formatCurrency(newValueEstimate, currency)}</span>
+                <span className="font-bold text-blue-600">{formatCurrency(newValueEstimate, { display: currency, rate: fxRate })}</span>
               </div>
             </div>
 

@@ -1,547 +1,294 @@
-# CLAUDE.md — MyAssets Project
+# CLAUDE.md — PortoLook (MyAssets) Project
 
-> Dokumen ini adalah panduan utama untuk Claude Code dalam mengerjakan proyek **MyAssets**: aplikasi web pencatatan dan pemantauan perkembangan aset pribadi (Saham, Crypto, Emas).
-
----
-
-## 🗂️ PROJECT OVERVIEW
-
-**Nama Proyek:** MyAssets  
-**Tipe:** Full-stack Web Application  
-**Tech Stack:** Next.js 14 (App Router) + Better Auth + Drizzle ORM + PostgreSQL  
-**Currency:** IDR (Rupiah) — satu-satunya mata uang yang digunakan  
-**User:** Single user dengan autentikasi via Better Auth  
-**Platform:** Web App (Desktop-first, responsif)  
-**Harga Aset:** Input manual (tidak ada integrasi API harga eksternal)
+Panduan utama untuk AI assistant dalam mengerjakan **PortoLook**: aplikasi pencatatan dan pemantauan portofolio pribadi lintas mata uang dengan i18n (EN + ID).
 
 ---
 
-## 🏗️ TECH STACK & TOOLING
+## Project Overview
 
-| Layer | Teknologi |
-|---|---|
-| Framework | Next.js 14 (App Router) |
-| Language | TypeScript |
-| Styling | Tailwind CSS v4 |
-| Component Library | shadcn/ui |
-| Icons | Lucide React |
-| Auth | Better Auth |
-| Database ORM | Drizzle ORM |
-| Database | PostgreSQL |
-| Charts | Recharts |
-| Form Handling | React Hook Form + Zod |
-| State Management | Zustand (jika diperlukan) |
-| Date Handling | date-fns |
-| Formatting | Prettier + ESLint |
+- **Nama:** PortoLook (formerly MyAssets)
+- **Tipe:** Full-stack Web Application (SaaS-style dashboard)
+- **Tech Stack:** Next.js 16 (App Router, Turbopack) + TypeScript + Better Auth + Drizzle ORM + PostgreSQL
+- **Mata uang:** IDR (default, tersimpan di DB) + USD (display via FX conversion)
+- **Bahasa:** English (default) + Bahasa Indonesia
+- **Auth:** Better Auth (email/password) dengan session cookies
+- **Charts:** Recharts (responsive containers)
+- **Form:** React Hook Form + Zod
+- **Date:** date-fns
 
 ---
 
-## 📁 STRUKTUR FOLDER
+## Folder Structure
 
 ```
-myassets/
+my-assets/
 ├── app/
-│   ├── layout.tsx                  # Root layout
-│   ├── page.tsx                    # Dashboard (/)
-│   ├── (auth)/
-│   │   ├── login/
-│   │   │   └── page.tsx            # Halaman login
-│   │   └── layout.tsx
-│   ├── assets/
-│   │   ├── new/
-│   │   │   └── page.tsx            # Form tambah aset baru
-│   │   └── [id]/
-│   │       ├── page.tsx            # Detail aset
-│   │       └── update/
-│   │           └── page.tsx        # Form update nilai aset
-│   └── api/
-│       ├── auth/
-│       │   └── [...all]/
-│       │       └── route.ts        # Better Auth handler
-│       ├── assets/
-│       │   ├── route.ts            # GET all, POST new asset
-│       │   └── [id]/
-│       │       ├── route.ts        # GET, PUT, DELETE asset by ID
-│       │       └── valuations/
-│       │           └── route.ts    # POST new valuation
-│       └── dashboard/
-│           └── route.ts            # GET aggregated dashboard data
+│   ├── (auth)/login/page.tsx              # Login (no locale prefix)
+│   ├── [locale]/                          # All UI under locale prefix
+│   │   ├── layout.tsx                     # Providers (Intl, Theme, Currency)
+│   │   ├── page.tsx                       # Redirect → /dashboard
+│   │   └── (app)/                         # Authenticated shell
+│   │       ├── layout.tsx                 # Sidebar + Header + main
+│   │       ├── dashboard/page.tsx
+│   │       ├── assets/
+│   │       │   ├── page.tsx               # List view
+│   │       │   ├── new/page.tsx           # Multi-step create form
+│   │       │   └── [id]/
+│   │       │       ├── page.tsx           # Detail
+│   │       │       ├── update/page.tsx
+│   │       │       ├── deposit/page.tsx
+│   │       │       ├── sell/page.tsx
+│   │       │       ├── transaction/page.tsx
+│   │       │       ├── transactions/[trxId]/edit/page.tsx
+│   │       │       └── valuations/[valId]/edit/page.tsx
+│   │       └── settings/
+│   │           ├── page.tsx               # Server entry
+│   │           └── SettingsClient.tsx     # Interactive form
+│   ├── api/
+│   │   ├── auth/[...all]/route.ts         # Better Auth handler
+│   │   ├── assets/                        # CRUD + sub-routes
+│   │   ├── dashboard/route.ts             # Aggregated data
+│   │   ├── fx-rate/route.ts               # Public FX endpoint
+│   │   └── user/preferences/route.ts      # PATCH locale/currency/fx
+│   ├── layout.tsx                         # Root: html + body + providers chain
+│   ├── globals.css                        # Tailwind v4 + design tokens
+│   └── page.tsx                           # Trampoline → /[locale]
 ├── components/
-│   ├── ui/                         # shadcn/ui components
-│   ├── dashboard/
-│   │   ├── NetWorthCard.tsx
-│   │   ├── GainLossCard.tsx
-│   │   ├── FilterTabs.tsx
-│   │   ├── SectorBreakdown.tsx
-│   │   └── AssetTable.tsx
-│   ├── assets/
-│   │   ├── AssetForm.tsx           # Form tambah aset (multi-step)
-│   │   ├── UpdateValueForm.tsx     # Form update nilai
+│   ├── ui/                                # shadcn/ui primitives (don't edit)
+│   ├── app-shell/                         # Layout chrome
+│   │   ├── Sidebar.tsx, Header.tsx
+│   │   ├── LocaleSwitcher.tsx, CurrencySwitcher.tsx, ThemeToggle.tsx
+│   ├── dashboard/                         # Bento dashboard cards
+│   │   ├── NetWorthCard.tsx, GainLossCard.tsx
+│   │   ├── FilterTabs.tsx, SectorBreakdown.tsx
+│   │   ├── OverviewChart.tsx, AssetTable.tsx
+│   ├── assets/                            # Asset-related
 │   │   ├── AssetDetailHeader.tsx
-│   │   ├── PerformanceChart.tsx    # Line chart tren nilai aset
-│   │   └── TransactionTable.tsx
-│   └── shared/
-│       ├── CurrencyDisplay.tsx     # Format Rp dengan separator
-│       ├── GainLossBadge.tsx       # Badge hijau/merah gain/loss
-│       └── PageHeader.tsx
+│   │   ├── AssetsListClient.tsx           # Dedicated list page
+│   │   ├── PerformanceChart.tsx, TransactionTable.tsx
+│   ├── providers/                         # React context providers
+│   │   ├── CurrencyProvider.tsx, ThemeProvider.tsx
+│   └── shared/                            # Cross-page primitives
+│       ├── PageHeader.tsx, EmptyState.tsx
+│       ├── CurrencyDisplay.tsx, GainLossBadge.tsx
+│       ├── HistoryFilter.tsx, Logo.tsx
 ├── lib/
-│   ├── auth.ts                     # Better Auth instance & config
-│   ├── auth-client.ts              # Better Auth client (untuk komponen)
-│   ├── db/
-│   │   ├── index.ts                # Drizzle client (koneksi PostgreSQL)
-│   │   ├── schema.ts               # Semua tabel Drizzle schema
-│   │   └── seed.ts                 # Data dummy untuk development
-│   ├── calculations.ts             # Fungsi hitung G/L, total modal
-│   ├── formatters.ts               # Format Rupiah, persentase, tanggal
-│   └── validations.ts              # Zod schemas
-├── drizzle/
-│   └── migrations/                 # File migrasi yang di-generate Drizzle Kit
-├── drizzle.config.ts               # Konfigurasi Drizzle Kit
-├── types/
-│   └── index.ts                    # TypeScript types & interfaces
-└── hooks/
-    ├── useAssets.ts
-    └── useDashboard.ts
+│   ├── auth.ts, auth-client.ts, auth-server.ts
+│   ├── formatters.ts                      # Sync (client-safe)
+│   ├── formatters-server.ts               # Async (with FX conversion)
+│   ├── calculations.ts, validations.ts, utils.ts
+│   ├── currency/
+│   │   ├── fx.ts                          # FX rate fetch + cache (unstable_cache)
+│   │   └── convert.ts
+│   ├── db/{index,schema,seed}.ts
+│   ├── i18n/{routing,request}.ts
+│   └── queries/dashboard.ts               # Shared query helper
+├── messages/{en,id}.json                  # Translation files
+├── hooks/useMounted.ts                    # React 19 mounted detector
+├── types/index.ts                         # Shared TS types
+├── drizzle/migrations/                    # Auto-generated
+├── proxy.ts                               # Middleware (Next.js 16: proxy.ts)
+└── next.config.ts, tsconfig.json, eslint.config.mjs, drizzle.config.ts
 ```
 
 ---
 
-## 🗄️ DATABASE SCHEMA (Drizzle ORM)
+## Database Schema
 
-```ts
-// lib/db/schema.ts
-import { pgTable, text, real, timestamp, pgEnum } from "drizzle-orm/pg-core";
+### Enums
+- `asset_type`: `SAHAM | CRYPTO | EMAS | REKSA_DANA | P2P | LAINNYA`
+- `asset_mode`: `INVESTING | TRADING`
+- `transaction_type`: `BUY | SELL | DEPOSIT | WITHDRAWAL | UPDATE`
+- `asset_status`: `ACTIVE | SOLD` (implicit)
 
-// Enums
-export const assetTypeEnum = pgEnum("asset_type", ["SAHAM", "CRYPTO", "EMAS"]);
-export const assetModeEnum = pgEnum("asset_mode", ["INVESTING", "TRADING"]);
-export const transactionTypeEnum = pgEnum("transaction_type", [
-  "BUY", "SELL", "DEPOSIT", "WITHDRAWAL", "UPDATE",
-]);
+### Tables
 
-// Tabel Assets
-export const assets = pgTable("assets", {
-  id:              text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
-  name:            text("name").notNull(),           // "BBCA", "Bitcoin", "Emas LM"
-  type:            assetTypeEnum("type").notNull(),   // SAHAM | CRYPTO | EMAS
-  mode:            assetModeEnum("mode").notNull(),   // INVESTING | TRADING
-  notes:           text("notes"),
+**`assets`**
+- `id`, `userId`, `name`, `type`, `mode`, `isNominal` (cash-only)
+- `notes`, `quantity`, `buyPrice`, `buyDate` (INVESTING fields)
+- `platformName`, `initialCapital` (TRADING fields)
+- `status`, `createdAt`, `updatedAt`
 
-  // Investing fields (null jika mode = TRADING)
-  quantity:        real("quantity"),                  // lot / unit / gram
-  buyPrice:        real("buy_price"),                 // harga beli per unit
-  buyDate:         timestamp("buy_date"),
+**`valuations`** — historical snapshots
+- `id`, `assetId`, `value` (in stored currency), `recordedAt`, `notes`
 
-  // Trading fields (null jika mode = INVESTING)
-  platformName:    text("platform_name"),
-  initialCapital:  real("initial_capital"),           // modal awal (Rp)
+**`transactions`**
+- `id`, `assetId`, `type`, `amount`, `quantity?`, `price?`, `realizedGain?`, `fundSource?`, `date`, `notes`
 
-  createdAt:       timestamp("created_at").defaultNow().notNull(),
-  updatedAt:       timestamp("updated_at").defaultNow().notNull(),
-});
+**`user`** (Better Auth) — extended via `additionalFields`:
+- `currency` (default `"IDR"`)
+- `locale` (default `"en"`)
+- `fxRateOverride` (nullable number)
 
-// Tabel Valuations — histori nilai aset dari waktu ke waktu
-export const valuations = pgTable("valuations", {
-  id:          text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
-  assetId:     text("asset_id").notNull().references(() => assets.id, { onDelete: "cascade" }),
-  value:       real("value").notNull(),               // Nilai total aset dalam IDR
-  recordedAt:  timestamp("recorded_at").notNull(),    // Support backdate
-  notes:       text("notes"),
-  createdAt:   timestamp("created_at").defaultNow().notNull(),
-});
+> Generated automatically by Better Auth — don't write manual migration for it.
 
-// Tabel Transactions — riwayat transaksi per aset
-export const transactions = pgTable("transactions", {
-  id:          text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
-  assetId:     text("asset_id").notNull().references(() => assets.id, { onDelete: "cascade" }),
-  type:        transactionTypeEnum("type").notNull(),
-  amount:      real("amount").notNull(),              // Nominal transaksi (Rp)
-  fundSource:  text("fund_source"),                   // Sumber dana (e.g., "Tabungan")
-  date:        timestamp("date").notNull(),
-  notes:       text("notes"),
-  createdAt:   timestamp("created_at").defaultNow().notNull(),
-});
+---
 
-// Better Auth akan generate tabel user, session, account, verification secara otomatis
-// Lihat lib/auth.ts untuk konfigurasi
+## Business Logic & Calculations
+
+### Total Modal (initial capital)
+- **INVESTING (non-nominal):** `qty × buyPrice` (saham = lot × 100 × price, crypto = unit × price, emas = gram × price)
+- **INVESTING (nominal):** `initialCapital`
+- **TRADING:** `initialCapital`
+
+### Current Value
+Latest `valuation.value` from `valuations` table (by `recordedAt DESC`), fallback to `totalModal`.
+
+### Gain/Loss
+- **Nominal:** `currentValue - totalModal + sum(transactions.realizedGain)`
+- **Percent:** `(nominal / totalModal) × 100`
+
+### Sector Breakdown
+`groupBy(assetType) → sum(currentValue) → percent of total`
+
+### FX Conversion (server-side only)
+- Stored currency = `IDR`, display = `USD` → divide by rate
+- Stored = `USD`, display = `IDR` → multiply by rate
+- Rate source: `unstable_cache` wrapper around Frankfurter API (`/api/fx-rate`), 24h revalidate
+- User override via `user.fxRateOverride`
+
+---
+
+## Pages & Features
+
+### Auth Flow
+- `/(auth)/login` — single page, redirect to `/{locale}/dashboard` after success
+- Logout: client-side `authClient.signOut()` → router push to `/{locale}/login`
+
+### App Shell (authenticated)
+- **Desktop:** persistent sidebar (left) with nav links + locale/currency/theme controls
+- **Mobile:** header with sheet drawer
+
+### Dashboard (`/{locale}/dashboard`)
+- **NetWorthCard:** total net worth + total capital
+- **GainLossCard:** total return (nominal + percent, color-coded)
+- **OverviewChart:** bar chart of asset values (Recharts, `useMounted` guard)
+- **SectorBreakdown:** donut/pie of asset type distribution
+- **AssetTable:** inline paginated table of assets (5/page)
+- **TransactionTable:** global transaction history (time filter)
+- **Empty state:** when `assets.length === 0`
+
+### Assets (`/{locale}/assets`)
+- Full table with: search (name + platform), type filter, mode filter, sort (8 options), pagination (10/page)
+- Per-row dropdown: Detail / Update / Sell / Deposit / Withdraw
+- Empty state with CTA → `/assets/new`
+
+### Asset Detail (`/{locale}/assets/[id]`)
+- Header: back button, name + badges, action buttons (Deposit/Sell/Withdraw/Update/Delete)
+- Hero stats: current value + G/L
+- Meta info bar: quantity/recording, type, platform, buy date
+- PerformanceChart (line/area) + history table
+
+### New Asset (`/{locale}/assets/new`)
+- Multi-step form (3 steps): Type → Details → Confirm
+- Submit → POST `/api/assets` → redirect to detail
+
+### Settings (`/{locale}/settings`)
+- Profile section: name + email (read-only)
+- Preferences section:
+  - Language: EN / ID (saved via `PATCH /api/user/preferences`)
+  - Currency: IDR / USD
+  - FX rate override: optional manual rate
+
+---
+
+## Design System (Linear-inspired)
+
+### Tokens (defined in `globals.css` via `@theme`)
+- **Primary:** `#5E6AD2` (Linear indigo)
+- **Neutral palette:** 50–950 grayscale
+- **Gain:** emerald-600 / emerald-400 (dark)
+- **Loss:** red-600 / red-400 (dark)
+- **Radius:** `--radius-md: 6px`, `--radius-lg: 8px`
+- **Fonts:** Inter (sans), JetBrains Mono (mono)
+
+### Typography
+- Display (page title): `text-2xl sm:text-3xl font-bold tracking-tight`
+- Section title: `text-base font-medium`
+- Card label: `text-xs font-medium uppercase tracking-wider text-muted-foreground`
+- Numeric primary: `text-2xl font-bold tabular-nums tracking-tight`
+- Numeric secondary: `text-sm tabular-nums`
+
+### Card Hierarchy
+- **Default card:** `border border-border bg-card rounded-xl shadow-sm`
+- **Empty state:** `border border-dashed border-border bg-card rounded-lg`
+- **Bento tile:** `p-5 flex flex-col gap-3`
+- **No gradients** in cards (Linear convention)
+
+### Spacing Scale
+- `gap-2` (8px), `gap-3` (12px), `gap-4` (16px), `gap-6` (24px), `gap-8` (32px), `gap-12` (48px)
+
+---
+
+## i18n (next-intl v4)
+
+### Routing
+- `localePrefix: "always"` — every URL must start with `/en` or `/id`
+- `proxy.ts` runs intl middleware + auth check
+- Plain `<Link href="/dashboard">` works because middleware redirects to `/en/dashboard`
+
+### Translation files
+- `messages/en.json` and `messages/id.json` — namespaces:
+  - `metadata`, `common`, `nav`, `settings`, `errors`, `auth`
+  - `dashboard`, `assets`, `filters`, `transactions`, `forms`, `empty`
+  - `assetTypes`, `assetModes`
+
+### Usage
+- **Client component:** `const t = useTranslations("dashboard")` → `t("netWorth")`
+- **Server component:** `const t = await getTranslations("dashboard")` → `t("netWorth")`
+- **With placeholder:** `tCommon("showing", { start: 1, end: 10, total: 25 })`
+- **Locale prop on `<html lang>`:** read from `x-next-intl-locale` header in root layout
+
+### Adding a new key
+1. Add to `en.json` and `id.json` (same path)
+2. Use `useTranslations("namespace")` + `t("key")`
+3. Run `pnpm build` — missing keys fail at build time
+
+---
+
+## Coding Conventions
+
+1. **TypeScript strict** — no `any` except in narrow adapter code
+2. **Server Components by default** — add `"use client"` only when needed
+3. **Sync formatters in client, async in server** — `formatCurrency` (sync, no conversion) for client; `formatCurrencyWithConversion` (async) for server pre-formatting
+4. **React 19 hooks:** use `useMounted` for chart/ResponsiveContainer gating; disable `react-hooks/set-state-in-effect` only where genuinely needed (data fetching on mount)
+5. **API route protection:** every route must validate session via `auth.api.getSession({ headers: await headers() })` — return `{ success: false, error: "Unauthorized" }, { status: 401 }` if missing
+6. **Drizzle queries:** prefer `db.query.*` (relational) for joins; `db.select()` for simple queries
+7. **Zod validation:** all form input via `react-hook-form` + `@hookform/resolvers/zod`
+8. **Consistent API response:** `{ success: true, data: ... }` or `{ success: false, error: "..." }`
+9. **No hardcoded user-facing strings** — always use `t("key")`
+10. **Icon library:** `lucide-react`, individual imports, `size={16}` for inline
+11. **Tailwind v4:** utility-first, no custom CSS unless required, `cn()` for conditional classes
+
+---
+
+## Critical Gotchas
+
+1. **Async client components crash** — never return a Promise from a Client Component. Sync formatters (`formatCurrency`) only.
+2. **`useMounted` hook** — `hooks/useMounted.ts` uses `useSyncExternalStore` to avoid React 19 `set-state-in-effect` rule; wrap Recharts `ResponsiveContainer` with `{mounted && <ResponsiveContainer>}`.
+3. **`proxy.ts` matcher** — must exclude all `/api/*` (not just `/api/auth`); current: `"/((?!api|_next/static|_next/image|favicon.ico).*)"`
+4. **Root layout** — Next.js requires `<html>` + `<body>` in `app/layout.tsx`; `[locale]/layout.tsx` only wraps with providers.
+5. **`/[locale]/page.tsx`** — must redirect to `/[locale]/dashboard` (without it, `/id` 404s).
+6. **Better Auth + `additionalFields`** — field names in schema must match field names in `additionalFields` config exactly.
+
+---
+
+## Environment Variables
+
 ```
-
-### Konfigurasi Drizzle Kit
-
-```ts
-// drizzle.config.ts
-import { defineConfig } from "drizzle-kit";
-
-export default defineConfig({
-  schema: "./lib/db/schema.ts",
-  out: "./drizzle/migrations",
-  dialect: "postgresql",
-  dbCredentials: {
-    url: process.env.DATABASE_URL!,
-  },
-});
-```
-
-### Setup Better Auth
-
-```ts
-// lib/auth.ts
-import { betterAuth } from "better-auth";
-import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { db } from "@/lib/db";
-
-export const auth = betterAuth({
-  database: drizzleAdapter(db, { provider: "pg" }),
-  emailAndPassword: { enabled: true },
-  // Tambahkan social providers jika diperlukan
-});
-```
-
-```ts
-// lib/auth-client.ts
-import { createAuthClient } from "better-auth/react";
-
-export const authClient = createAuthClient({
-  baseURL: process.env.NEXT_PUBLIC_APP_URL,
-});
-```
-
-### Koneksi Database
-
-```ts
-// lib/db/index.ts
-import { drizzle } from "drizzle-orm/node-postgres";
-import { Pool } from "pg";
-import * as schema from "./schema";
-
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-export const db = drizzle(pool, { schema });
+DATABASE_URL=postgresql://...
+BETTER_AUTH_SECRET=...
+NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
 ---
 
-## 📐 BUSINESS LOGIC & KALKULASI
+## Verification Commands
 
-### Kalkulasi Modal Awal (Investing)
-```
-Total Modal = quantity × buyPrice
-- Saham   : lot × 100 × harga per lembar
-- Crypto  : unit × harga per unit
-- Emas    : gram × harga per gram
+```bash
+pnpm exec tsc --noEmit        # TypeScript zero errors
+pnpm lint                     # ESLint zero warnings
+pnpm build                    # Production build zero warnings
 ```
 
-### Kalkulasi Gain/Loss
-```
-G/L Nominal  = Current Value - Total Modal
-G/L Persen   = (G/L Nominal / Total Modal) × 100
-```
-
-### Kalkulasi Update Nilai (Investing)
-```
-- Saham  : new value = lot × 100 × harga per lembar input
-- Crypto : new value = unit × harga per unit input
-- Emas   : new value = gram × harga per gram input
-```
-
-### Kalkulasi Update Nilai (Trading)
-```
-- Input langsung = saldo akun terkini di platform (Rp)
-```
-
-### Dashboard Aggregation
-```
-Net Worth        = Σ nilai terkini semua aset
-Total Modal      = Σ modal awal semua aset
-G/L Keseluruhan  = Net Worth - Total Modal
-Filter Investing = hanya aset mode INVESTING
-Filter Trading   = hanya aset mode TRADING
-Breakdown Sektor = groupBy(AssetType) → sum current value
-```
-
----
-
-## 🖥️ HALAMAN & FITUR
-
-### 1. Dashboard (`/`)
-- **Net Worth Card**: Total nilai semua aset dalam Rp
-- **G/L Card**: Gain/Loss nominal + persentase (warna hijau/merah)
-- **Filter Tabs**: Semua | Investing Only | Trading Only
-- **Breakdown G/L**: Tabel perbandingan performa Investing vs Trading
-- **Ringkasan Sektoral**: Pie/donut chart proporsi Saham / Crypto / Emas
-- **Tabel Aset**: List semua aset dengan nilai terkini, G/L, dan link ke detail
-
-### 2. Detail Aset (`/assets/[id]`)
-- **Header**: Nama, tipe, mode, tanggal beli/mulai
-- **Info Card Investing**: Quantity, harga beli rata-rata, total modal
-- **Info Card Trading**: Platform name, modal aktif
-- **Performance Card**: Nilai terkini, G/L nominal & persen
-- **Chart**: Line chart tren nilai aset dari waktu ke waktu (dari data valuasi)
-- **Tabel Histori Valuasi**: Tanggal, nilai, notes
-- **Tabel Transaksi**: Tipe, jumlah, sumber dana, tanggal
-
-### 3. Tambah Aset Baru (`/assets/new`)
-Multi-step form:
-- **Step 1**: Pilih Jenis Aset (Saham / Crypto / Emas)
-- **Step 2**: Pilih Mode (INVESTING / TRADING)
-- **Step 3**: Input detail sesuai mode:
-  - Investing: nama, quantity, harga beli per unit, tanggal, catatan
-  - Trading: nama platform, modal awal, nilai saat ini, tanggal, catatan
-- **Finalisasi**: Otomatis buat entri valuasi awal
-
-### 4. Update Nilai Aset (`/assets/[id]/update`)
-Form update bergantung mode & tipe:
-- **Investing Saham**: Input harga per lembar → sistem hitung total
-- **Investing Crypto**: Input harga per unit → sistem hitung total
-- **Investing Emas**: Input harga per gram → sistem hitung total
-- **Trading**: Input langsung nilai saldo akun (Rp)
-- **Field tanggal**: Support backdate (default = hari ini)
-
----
-
-## 🎨 DESIGN SYSTEM
-
-**Tema:** Dark mode, finansial/profesional, bersih dan data-dense  
-**Palet Warna:**
-```
-Background    : #0F1117 (near black)
-Surface       : #1A1D2E (dark navy card)
-Border        : #2A2D3E
-Primary       : #6366F1 (indigo)
-Gain (green)  : #22C55E
-Loss (red)    : #EF4444
-Text Primary  : #F1F5F9
-Text Muted    : #64748B
-```
-
-**Prinsip UI:**
-- Data harus terbaca dengan cepat — gunakan tipografi hierarkis yang jelas
-- Warna hijau = positif/gain, merah = negatif/loss — konsisten di seluruh app
-- Angka besar dan penting dibuat prominent (font besar, bold)
-- Format Rupiah: selalu `Rp 1.234.567` (titik sebagai separator ribuan)
-- Persentase: selalu tampilkan tanda `+` untuk positif, `-` untuk negatif
-
----
-
-## 🧩 UI COMPONENT CONVENTIONS
-
-### Tailwind CSS
-- Gunakan Tailwind utility classes secara langsung — tidak ada custom CSS kecuali benar-benar diperlukan
-- Gunakan CSS variables Tailwind untuk warna (`bg-background`, `text-foreground`, dll) agar konsisten dengan tema shadcn/ui
-- Gunakan `cn()` helper dari `lib/utils.ts` untuk conditional class merging:
-  ```ts
-  import { cn } from "@/lib/utils";
-  <div className={cn("base-class", isActive && "active-class")} />
-  ```
-
-### shadcn/ui
-- Semua komponen UI primitif (Button, Card, Dialog, Table, Input, Select, Tabs, dll) **wajib** menggunakan shadcn/ui — jangan buat dari scratch
-- Install komponen via CLI: `npx shadcn@latest add <component>`
-- Komponen shadcn ada di `components/ui/` — **jangan modifikasi langsung**, extend di luar folder tersebut jika perlu kustomisasi
-- Komponen shadcn yang pasti dibutuhkan proyek ini:
-  ```
-  button, card, input, label, select, tabs, table, dialog,
-  badge, separator, skeleton, toast, dropdown-menu, form
-  ```
-
-### Lucide React
-- **Semua icon wajib dari Lucide React** — tidak menggunakan icon library lain
-- Import individual untuk tree-shaking optimal:
-  ```ts
-  // ✅ Benar
-  import { TrendingUp, TrendingDown, Plus, Trash2 } from "lucide-react";
-
-  // ❌ Salah
-  import * as Icons from "lucide-react";
-  ```
-- Ukuran icon konsisten: `size={16}` untuk inline, `size={20}` untuk tombol, `size={24}` untuk header
-- Selalu pasangkan dengan `aria-hidden` jika dekoratif:
-  ```tsx
-  <TrendingUp size={16} aria-hidden="true" />
-  ```
-- Icon yang relevan untuk proyek ini:
-
-  | Konteks | Icon |
-  |---|---|
-  | Gain / naik | `TrendingUp` |
-  | Loss / turun | `TrendingDown` |
-  | Tambah aset | `Plus`, `PlusCircle` |
-  | Hapus | `Trash2` |
-  | Edit / update | `Pencil`, `RefreshCw` |
-  | Saham | `BarChart2` |
-  | Crypto | `Bitcoin` |
-  | Emas | `Gem` |
-  | Portfolio / wallet | `Wallet` |
-  | Investing | `PiggyBank` |
-  | Trading | `ArrowLeftRight` |
-  | Tanggal | `Calendar` |
-  | Histori | `History` |
-  | Detail / info | `Info` |
-  | Kembali | `ChevronLeft` |
-  | Menu | `MoreHorizontal` |
-
----
-
-## ✅ CODING CONVENTIONS
-
-1. **TypeScript strict mode** — tidak ada `any` kecuali terpaksa
-2. **Server Components by default** — gunakan `'use client'` hanya jika membutuhkan interaktivitas
-3. **API Routes di `app/api/`** — semua data fetching lewat API routes atau Server Actions
-4. **Auth guard di setiap API route** — selalu validasi sesi dengan Better Auth:
-   ```ts
-   const session = await auth.api.getSession({ headers: await headers() });
-   if (!session) return Response.json({ success: false, error: "Unauthorized" }, { status: 401 });
-   ```
-5. **Drizzle queries** — gunakan `db.query.*` (relational) untuk query dengan relasi, `db.select()` untuk query sederhana. Hindari N+1:
-   ```ts
-   // ✅ Benar — ambil aset beserta valuasi terbaru sekaligus
-   const assets = await db.query.assets.findMany({
-     with: { valuations: { orderBy: desc(valuations.recordedAt), limit: 1 } },
-   });
-   ```
-6. **Zod validation** — semua input form divalidasi dengan Zod schema
-7. **Error handling** — semua API route harus return response yang konsisten:
-   ```ts
-   { success: true, data: ... }
-   { success: false, error: "pesan error" }
-   ```
-8. **Format Rupiah** — selalu gunakan helper `formatIDR()` dari `lib/formatters.ts`
-9. **Migrasi** — setiap perubahan schema, jalankan `npx drizzle-kit generate` lalu `npx drizzle-kit migrate`
-10. **Komponen kecil** — satu komponen = satu tanggung jawab
-
----
-
-## 🚀 DEVELOPMENT PHASES (Urutan Pengerjaan)
-
-Ikuti urutan ini secara ketat. Selesaikan satu fase sebelum lanjut ke fase berikutnya.
-
-### FASE 1 — Foundation (Setup & Database)
-- [ ] Init Next.js 14 project dengan TypeScript
-- [ ] Install & konfigurasi Tailwind CSS
-- [ ] Install & konfigurasi shadcn/ui (`npx shadcn@latest init`)
-- [ ] Install komponen shadcn yang dibutuhkan (button, card, input, label, select, tabs, table, dialog, badge, separator, skeleton, toast, dropdown-menu, form)
-- [ ] Install Lucide React (`npm install lucide-react`)
-- [ ] Setup PostgreSQL (lokal atau cloud — Supabase/Railway/Neon)
-- [ ] Install & konfigurasi Drizzle ORM + `drizzle-kit`
-- [ ] Install & konfigurasi Better Auth dengan Drizzle adapter
-- [ ] Buat `lib/db/schema.ts` sesuai spesifikasi di atas
-- [ ] Jalankan `npx drizzle-kit generate` + `npx drizzle-kit migrate`
-- [ ] Setup `app/api/auth/[...all]/route.ts` untuk Better Auth handler
-- [ ] Buat halaman login (`/login`) dan middleware proteksi route
-- [ ] Buat seed data dummy (`lib/db/seed.ts`)
-- [ ] Buat `lib/calculations.ts`, `lib/formatters.ts`, `lib/validations.ts`
-- [ ] Buat `types/index.ts` dengan semua TypeScript interfaces
-
-### FASE 2 — API Layer
-- [ ] `GET /api/assets` — ambil semua aset dengan valuasi terkini
-- [ ] `POST /api/assets` — tambah aset baru + buat valuasi awal
-- [ ] `GET /api/assets/[id]` — detail aset + semua valuasi + transaksi
-- [ ] `PUT /api/assets/[id]` — edit data aset
-- [ ] `DELETE /api/assets/[id]` — hapus aset
-- [ ] `POST /api/assets/[id]/valuations` — tambah valuasi baru (update nilai)
-- [ ] `GET /api/dashboard` — data agregasi untuk dashboard
-
-### FASE 3 — Dashboard UI
-- [ ] Layout utama (sidebar/navbar + content area)
-- [ ] `NetWorthCard` component
-- [ ] `GainLossCard` component (dengan warna kondisional)
-- [ ] `FilterTabs` component (Semua / Investing / Trading)
-- [ ] `SectorBreakdown` — donut chart Saham/Crypto/Emas
-- [ ] `AssetTable` — tabel daftar aset di dashboard
-
-### FASE 4 — Form Tambah Aset
-- [ ] Multi-step form dengan state management
-- [ ] Step 1: Pilih tipe aset
-- [ ] Step 2: Pilih mode (Investing/Trading)
-- [ ] Step 3: Input detail + kalkulasi otomatis total modal
-- [ ] Validasi dengan Zod + React Hook Form
-- [ ] Submit → create asset + create initial valuation
-
-### FASE 5 — Halaman Detail Aset
-- [ ] `AssetDetailHeader` — nama, tipe, mode, tanggal
-- [ ] Info card kondisional (Investing vs Trading)
-- [ ] `PerformanceChart` — line chart tren nilai (Recharts)
-- [ ] `TransactionTable` — histori transaksi
-- [ ] Valuation history table
-
-### FASE 6 — Form Update Nilai
-- [ ] Form adaptif berdasarkan tipe + mode aset
-- [ ] Kalkulasi otomatis nilai total (untuk Investing)
-- [ ] Input langsung saldo (untuk Trading)
-- [ ] Field tanggal dengan support backdate
-- [ ] Submit → create new valuation record
-
-### FASE 7 — Polish & QA
-- [ ] Responsive design check (tablet + mobile)
-- [ ] Loading states dan error states di semua halaman
-- [ ] Empty states (saat belum ada aset)
-- [ ] Konfirmasi sebelum hapus aset
-- [ ] Cek semua kalkulasi dengan data edge case
-
----
-
-## ⚠️ ATURAN PENTING UNTUK CLAUDE
-
-1. **Jangan skip fase** — kerjakan Foundation dulu sebelum UI
-2. **Selalu tanya sebelum ambil keputusan arsitektur besar** yang tidak tercantum di dokumen ini
-3. **Ikuti schema Drizzle** yang sudah didefinisikan — jangan modifikasi tanpa konfirmasi. Setiap perubahan harus lewat `drizzle-kit generate` + `drizzle-kit migrate`
-4. **Semua angka finansial disimpan sebagai `real` (Float)** di database (IDR)
-5. **Semua API route harus diproteksi** dengan pengecekan sesi Better Auth — tidak ada endpoint publik kecuali `/api/auth/*`
-6. **Jangan generate Better Auth schema manual** — biarkan Better Auth + Drizzle adapter yang generate tabel `user`, `session`, `account`, `verification` otomatis
-7. **Tidak ada API harga eksternal** — semua nilai diinput manual oleh user
-8. **Backup data** — pastikan ada konfirmasi sebelum operasi destruktif (hapus aset)
-9. **Konsisten dengan design system** — warna gain/loss, format Rupiah, dll harus sama di semua tempat
-10. **Environment variables yang dibutuhkan:**
-    ```
-    DATABASE_URL=postgresql://...
-    BETTER_AUTH_SECRET=...
-    NEXT_PUBLIC_APP_URL=http://localhost:3000
-    ```
-
----
-
-## 📝 CONTOH DATA (untuk Seed)
-
-```ts
-// Contoh aset untuk testing
-const seedAssets = [
-  {
-    name: "BBCA",
-    type: "SAHAM",
-    mode: "INVESTING",
-    quantity: 10,      // 10 lot
-    buyPrice: 9200,    // Rp 9.200 per lembar
-    buyDate: "2024-01-15",
-    // Total Modal = 10 × 100 × 9200 = Rp 9.200.000
-  },
-  {
-    name: "Bitcoin",
-    type: "CRYPTO",
-    mode: "INVESTING",
-    quantity: 0.005,   // 0.005 BTC
-    buyPrice: 850000000, // Rp 850.000.000 per BTC
-    buyDate: "2024-03-01",
-    // Total Modal = 0.005 × 850.000.000 = Rp 4.250.000
-  },
-  {
-    name: "Emas LM Antam",
-    type: "EMAS",
-    mode: "INVESTING",
-    quantity: 5,       // 5 gram
-    buyPrice: 1050000, // Rp 1.050.000 per gram
-    buyDate: "2023-12-01",
-    // Total Modal = 5 × 1.050.000 = Rp 5.250.000
-  },
-  {
-    name: "Binance Futures",
-    type: "CRYPTO",
-    mode: "TRADING",
-    platformName: "Binance",
-    initialCapital: 5000000, // Rp 5.000.000
-    // Nilai terkini diinput manual
-  },
-]
-```
-
----
-
-*Dokumen ini harus selalu menjadi referensi utama selama pengerjaan proyek MyAssets. Update dokumen ini jika ada perubahan keputusan arsitektur yang disepakati.*
+All three must pass before declaring work complete.
